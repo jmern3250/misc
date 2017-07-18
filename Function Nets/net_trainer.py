@@ -44,7 +44,14 @@ def basic_MLP(X,y,sizes,is_training,threshold=0,dropout=False):
 	threshold_list = [threshold]*16
 	threshold_tensor = tf.constant(threshold_list)
 	output = tf.greater_equal(output_value, threshold_tensor)
+	loss = output - y 
 	return output
 
 
 tf.reset_default_graph()
+X = tf.placeholder(tf.float32, shape=1)
+y = tf.placeholder(tf.uint8, shape=16)
+is_training = tf.placeholder(tf.bool, shape=1)
+output = basic_MLP(X,y,is_training,threshold=0,dropout=False)
+
+
