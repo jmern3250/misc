@@ -9,43 +9,43 @@ import bitstring
 # print f1.read('bin') 
 
 def basic_MLP(X,y,sizes,is_training,bits=8,threshold=0,dropout=False): 
-	layers = {}
-	layers[0] = tf.layers.dense(X, sizes[0],
-								activation = tf.nn.relu,
-								use_bias=True,
-								)
-	if dropout:
-		dropout_key = str(0)+'d' 
-		layers[dropout_key] = tf.layers.dropout(layers[0],
-												rate=0.25,
-												training=is_training)
-	for i,  size in enumerate(sizes[1:]): 
-		if dropout: 
-			dropout_key_prior = str(i-1)+'d' 
-			layers[i] = tf.layers.dense(layers[dropout_key_prior], size,
-									activation = tf.nn.relu,
-									use_bias=True,
-									)
-			dropout_key = str(i)+'d' 
-			layers[dropout_key] = tf.layers.dropout(layers[dropout_key],
-												rate=0.25,
-												training=is_training)
-		else:
-			layers[i] = tf.layers.dense(layers[i-1], size,
-									activation = tf.nn.relu,
-									use_bias=True,
-									)
+    layers = {}
+    layers[0] = tf.layers.dense(X, sizes[0],
+                                activation = tf.nn.relu,
+                                use_bias=True,
+                                )
+    if dropout:
+        dropout_key = str(0)+'d' 
+        layers[dropout_key] = tf.layers.dropout(layers[0],
+                                                rate=0.25,
+                                                training=is_training)
+    for i,  size in enumerate(sizes[1:]): 
+        if dropout: 
+            dropout_key_prior = str(i-1)+'d' 
+            layers[i] = tf.layers.dense(layers[dropout_key_prior], size,
+                                    activation = tf.nn.relu,
+                                    use_bias=True,
+                                    )
+            dropout_key = str(i)+'d' 
+            layers[dropout_key] = tf.layers.dropout(layers[dropout_key],
+                                                rate=0.25,
+                                                training=is_training)
+        else:
+            layers[i] = tf.layers.dense(layers[i-1], size,
+                                    activation = tf.nn.relu,
+                                    use_bias=True,
+                                    )
 
-	output_value = tf.layers.dense(layers[-1], bits,
-							 	   activation = None,
-							       use_bias=False,
-									)
+    output_value = tf.layers.dense(layers[-1], bits,
+                                   activation = None,
+                                   use_bias=False,
+                                    )
 
-	threshold_list = [threshold]*bits
-	threshold_tensor = tf.constant(threshold_list)
-	output_bool = tf.greater_equal(output_value, threshold_tensor)
+    threshold_list = [threshold]*bits
+    threshold_tensor = tf.constant(threshold_list)
+    output_bool = tf.greater_equal(output_value, threshold_tensor)
     output = tf.cast(output_bool,dtype=tf.uint8) 
-	return output
+    return output
 
 def bit2real(X, bits=8):
     weight_list = [-1]
