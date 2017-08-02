@@ -270,7 +270,7 @@ def DACNet(X,data):
     composite = p3_ + p2_ + tc5
     upscale = tf.layers.conv2d_transpose(
             inputs=composite,
-            filters=800,
+            filters=500,
             kernel_size=[2,2],
             strides=8,
             activation=tf.nn.relu
