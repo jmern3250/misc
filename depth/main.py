@@ -264,13 +264,13 @@ def DACNet(X,data):
                 padding='valid',
                 activation=tf.nn.relu)
 
-    print(p3_.shape)
-    print(p2_.shape)
-    print(tc5.shape)
+    # print(p3_.shape)
+    # print(p2_.shape)
+    # print(tc5.shape)
     composite = p3_ + p2_ + tc5
     upscale = tf.layers.conv2d_transpose(
             inputs=composite,
-            filters=1000,
+            filters=800,
             kernel_size=[2,2],
             strides=8,
             activation=tf.nn.relu
