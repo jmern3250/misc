@@ -50,9 +50,10 @@ def main(args):
 def load_data(data_idx):
     if data_idx == 0:
         mat_contents = sio.loadmat('./data/NYU_data.mat')
-        X_train = mat_contents['images'].transpose([3,0,1,2])
+        X_train = mat_contents['images'].transpose([3,0,1,2])/255.0
         Y_train = mat_contents['depths'].transpose([2,0,1])
         Y_train = Y_train.reshape([1449,480,640,1])
+        Y_train /= Y_train.max()
     elif data_idx == 1: 
         TRAIN=2748
         # VALID=500
