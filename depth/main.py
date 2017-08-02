@@ -23,7 +23,7 @@ def main(args):
     LR = tf.placeholder(tf.float32)
     is_training = tf.placeholder(tf.bool)
     
-    output = DACNet(X)
+    output = DACNet(X,args.data)
     
     loss = tf.nn.l2_loss(output-Y)
     mean_loss = tf.reduce_mean(loss)
@@ -180,7 +180,7 @@ def conv_group(X, conv_params):
                                 )
     return conv_layers[layers-1]  
 
-def DACNet(X):
+def DACNet(X,data):
     c1_params = {
          'layers':2,
          'filters':64,
@@ -219,30 +219,54 @@ def DACNet(X):
     p4 = tf.nn.max_pool(c4, [1,2,2,1],[1,2,2,1],'VALID')
     c5 = conv_group(p4, c4_params)
     
-    tc5 = tf.layers.conv2d_transpose(
-            inputs=c5,
-            filters=512,
-            kernel_size=[2,5],
-            strides=4,
-            activation=tf.nn.relu
-    )
-    p3_ = tf.layers.conv2d_transpose(
-            inputs=p3,
-            filters=512,
-            kernel_size=[2,3],
-            strides=2,
-            activation=tf.nn.relu
-    )
-    p2_ = tf.layers.conv2d(
-            inputs=p2,
-            filters=512,
-            kernel_size=[1,1],
-            strides=1,
-            padding='valid',
-            activation=tf.nn.relu)
-#     print(p3_.shape)
-#     print(p2_.shape)
-#     print(tc5.shape)
+    if data == 0:
+        tc5 = tf.layers.conv2d_transpose(
+                inputs=c5,
+                filters=512,
+                kernel_size=[2,2],
+                strides=4,
+                activation=tf.nn.relu
+        )
+        p3_ = tf.layers.conv2d_transpose(
+                inputs=p3,
+                filters=512,
+                kernel_size=[2,2],
+                strides=2,
+                activation=tf.nn.relu
+        )
+        p2_ = tf.layers.conv2d(
+                inputs=p2,
+                filters=512,
+                kernel_size=[1,1],
+                strides=1,
+                padding='valid',
+                activation=tf.nn.relu)
+    else:
+        tc5 = tf.layers.conv2d_transpose(
+                inputs=c5,
+                filters=512,
+                kernel_size=[2,5],
+                strides=4,
+                activation=tf.nn.relu
+        )
+        p3_ = tf.layers.conv2d_transpose(
+                inputs=p3,
+                filters=512,
+                kernel_size=[2,3],
+                strides=2,
+                activation=tf.nn.relu
+        )
+        p2_ = tf.layers.conv2d(
+                inputs=p2,
+                filters=512,
+                kernel_size=[1,1],
+                strides=1,
+                padding='valid',
+                activation=tf.nn.relu)
+
+    print(p3_.shape)
+    print(p2_.shape)
+    print(tc5.shape)
     composite = p3_ + p2_ + tc5
     upscale = tf.layers.conv2d_transpose(
             inputs=composite,
