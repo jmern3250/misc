@@ -40,7 +40,7 @@ def main(args):
     _ = run_model(sess, X, Y, is_training, mean_loss, X_train, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, 
               print_every=100, decay=args.decay,
-              training=train_step, plot_losses=False, writer=writer)
+              training=train_step, plot_losses=False, writer=None)
     model_name = './Models/'
     model_name += 'data_' + str(args.data)
     model_name += '_epochs_' + str(args.epochs)
