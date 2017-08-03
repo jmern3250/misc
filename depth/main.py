@@ -31,7 +31,7 @@ def main(args):
     optimizer = tf.train.AdamOptimizer(learning_rate=args.rate)
     train_step = optimizer.minimize(mean_loss)
     
-    sess = tf.InteractiveSession()
+    sess = tf.Session()
     saver = tf.train.Saver()
 
     sess.run(tf.global_variables_initializer())
