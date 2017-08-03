@@ -33,12 +33,14 @@ def main(args):
     
     sess = tf.Session()
     saver = tf.train.Saver()
+    writer = tf.summary.FileWriter('./tb',sess.graph)
+    import pdb; pdb.set_trace()
 
     sess.run(tf.global_variables_initializer())
     _ = run_model(sess, X, Y, is_training, mean_loss, X_train, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, 
               print_every=100, decay=args.decay,
-              training=train_step, plot_losses=False)
+              training=train_step, plot_losses=False, writer=writer)
     model_name = './Models/'
     model_name += 'data_' + str(args.data)
     model_name += '_epochs_' + str(args.epochs)
@@ -85,7 +87,7 @@ def load_data(data_idx):
 
 def run_model(session, X, Y, is_training, loss_val, X_train, Y_train, 
               epochs=1, batch_size=64, print_every=100, decay=None,
-              training=None, plot_losses=False):
+              training=None, plot_losses=False,writer=None):
     
     # shuffle indicies
     train_indicies = np.arange(X_train.shape[0])
@@ -127,6 +129,8 @@ def run_model(session, X, Y, is_training, loss_val, X_train, Y_train,
                 loss, _ = session.run(variables,feed_dict=feed_dict)
             else: 
                 loss = session.run(variables,feed_dict=feed_dict)
+            if writer is not None: 
+                _ = session.run(writer)
             # aggregate performance stats
 
             losses.append(loss*actual_batch_size)
@@ -155,7 +159,6 @@ def conv_group(X, conv_params):
         Stride 
         Padding (Valid/Same)
         Activation (Not yet )'''
-    start = True
     layers = conv_params['layers']
     filters = conv_params['filters']
     kernel_size = conv_params['size']
@@ -163,7 +166,7 @@ def conv_group(X, conv_params):
     padding = conv_params['pad']
     conv_layers = {}
     for i in range(layers): 
-        if start:
+        if i == 0:
             conv_layers[i] = tf.layers.conv2d(
                                 inputs=X,
                                 filters=filters,
