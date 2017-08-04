@@ -12,7 +12,13 @@ import timeit
 
 def main(args):
     X_train, Y_train = load_data(args.data)
-    # dev = tf.device('/gpu:0')
+    # dev = tf.device('/cpu:0')
+    if args.GPU == 0:
+        config = tf.ConfigProto(
+                device_count = {'GPU': 0}
+                )
+    else:
+        config = None
 
     tf.reset_default_graph()
     if args.data == 0:
@@ -32,7 +38,7 @@ def main(args):
     optimizer = tf.train.AdamOptimizer(learning_rate=args.rate)
     train_step = optimizer.minimize(mean_loss)
     
-    sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
+    sess = tf.Session(config=config)
     saver = tf.train.Saver()
     writer = tf.summary.FileWriter('./tb',sess.graph)
     # import pdb; pdb.set_trace()
@@ -186,43 +192,79 @@ def conv_group(X, conv_params):
     return conv_layers[layers-1]  
 
 def DACNet(X,data):
-    c1_params = {
-         'layers':2,
-         'filters':64,
-         'size':3,
-         'stride':1,
-         'pad': 'same'
-     }
-    c2_params = {
-         'layers':2,
-         'filters':128,
-         'size':3,
-         'stride':1,
-         'pad': 'same'
-     }
-    c3_params = {
-         'layers':3,
-         'filters':256,
-         'size':3,
-         'stride':1,
-         'pad': 'same'
-     }
-    c4_params = {
-         'layers':3,
-         'filters':512,
-         'size':3,
-         'stride':1,
-         'pad': 'same'
-     }
-    c1 = conv_group(X, c1_params)
+    # c1_params = {
+    #      'layers':2,
+    #      'filters':64,
+    #      'size':3,
+    #      'stride':1,
+    #      'pad': 'same'
+    #  }
+    # c2_params = {
+    #      'layers':2,
+    #      'filters':128,
+    #      'size':3,
+    #      'stride':1,
+    #      'pad': 'same'
+    #  }
+    # c3_params = {
+    #      'layers':3,
+    #      'filters':256,
+    #      'size':3,
+    #      'stride':1,
+    #      'pad': 'same'
+    #  }
+    # c4_params = {
+    #      'layers':3,
+    #      'filters':512,
+    #      'size':3,
+    #      'stride':1,
+    #      'pad': 'same'
+    #  }
+
+    c1 = tf.layers.conv2d(
+                        inputs=X, 
+                        filters=64,
+                        kernel_size=3,
+                        strides=1,
+                        padding='same',
+                        name='c1')
+    # c1 = conv_group(X, c1_params)
     p1 = tf.nn.max_pool(c1, [1,2,2,1],[1,2,2,1],'VALID')
-    c2 = conv_group(p1, c2_params)
+    # c2 = conv_group(p1, c2_params)
+    c2 = tf.layers.conv2d(
+                        inputs=p1, 
+                        filters=128,
+                        kernel_size=3,
+                        strides=1,
+                        padding='same',
+                        name='c2')
     p2 = tf.nn.max_pool(c2, [1,2,2,1],[1,2,2,1],'VALID')
-    c3 = conv_group(p2, c3_params)
+    # c3 = conv_group(p2, c3_params)
+    c3 = tf.layers.conv2d(
+                        inputs=p2, 
+                        filters=256,
+                        kernel_size=3,
+                        strides=1,
+                        padding='same',
+                        name='c3')
     p3 = tf.nn.max_pool(c3, [1,2,2,1],[1,2,2,1],'VALID')
-    c4 = conv_group(p3, c4_params)
+    # c4 = conv_group(p3, c4_params)
+    c4 = tf.layers.conv2d(
+                        inputs=p3, 
+                        filters=512,
+                        kernel_size=3,
+                        strides=1,
+                        padding='same',
+                        name='c4')
     p4 = tf.nn.max_pool(c4, [1,2,2,1],[1,2,2,1],'VALID')
-    c5 = conv_group(p4, c4_params)
+    c5 = tf.layers.conv2d(
+                        inputs=p4, 
+                        filters=512,
+                        kernel_size=3,
+                        strides=1,
+                        padding='same',
+                        name='c5')
+    # c5 = conv_group(p4, c4_params)
     
     if data == 0:
         tc5 = tf.layers.conv2d_transpose(
@@ -245,7 +287,8 @@ def DACNet(X,data):
                 kernel_size=[1,1],
                 strides=1,
                 padding='valid',
-                activation=tf.nn.relu)
+                activation=tf.nn.relu, 
+                name='c6')
     else:
         tc5 = tf.layers.conv2d_transpose(
                 inputs=c5,
@@ -267,7 +310,8 @@ def DACNet(X,data):
                 kernel_size=[1,1],
                 strides=1,
                 padding='valid',
-                activation=tf.nn.relu)
+                activation=tf.nn.relu,
+                name='c6')
 
     # print(p3_.shape)
     # print(p2_.shape)
@@ -285,7 +329,8 @@ def DACNet(X,data):
             filters=1,
             kernel_size=[2,2],
             strides=2,
-            activation=tf.nn.relu
+            activation=tf.nn.relu, 
+            name='c7'
     )
     # print(X.shape)
     # print(output.shape)
@@ -297,6 +342,7 @@ if __name__ == '__main__':
     parser.add_argument('epochs', type=int) #0:NYU, 1:Airsim
     parser.add_argument('batch_size', type=int) #0:NYU, 1:Airsim
     parser.add_argument('rate', type=float) #0:NYU, 1:Airsim
-    parser.add_argument('decay', type=float) #0:NYU, 1:Airsim
+    parser.add_argument('decay', type=float) 
+    parser.add_argument('GPU', type=int) 
     args = parser.parse_args()
     main(args)
