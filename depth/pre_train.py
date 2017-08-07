@@ -12,6 +12,7 @@ import timeit
 
 def main(args):
     X_train, Y_train = load_data(args.data)
+    Y_train_ = np.stack([Y_train.squeeze()]*3,axis=3)
     # dev = tf.device('/cpu:0')
     if args.GPU == 0:
         config = tf.ConfigProto(
@@ -31,7 +32,7 @@ def main(args):
     LR = tf.placeholder(tf.float32)
     is_training = tf.placeholder(tf.bool)
     
-    output = DACNet(Y, is_training, args.data)
+    output = DACNet(X, is_training, args.data)
     
     loss = tf.nn.l2_loss(output-Y)
     mean_loss = tf.reduce_mean(loss)
@@ -48,7 +49,7 @@ def main(args):
 
     sess.run(tf.global_variables_initializer())
     # import pdb; pdb.set_trace()
-    _ = run_model(sess, X, Y, is_training, mean_loss, X_train, Y_train, 
+    _ = run_model(sess, X, Y, is_training, mean_loss, Y_train_, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, 
               print_every=10, decay=args.decay,
               training=train_step, plot_losses=False, writer=writer, sum_vars=merged)

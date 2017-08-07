@@ -65,7 +65,9 @@ def load_data(data_idx):
         X_train = mat_contents['images'].transpose([3,0,1,2])/255.0
         Y_train = mat_contents['depths'].transpose([2,0,1])
         Y_train = Y_train.reshape([1449,480,640,1])
-        Y_train /= 1.0 - Y_train.max()
+        Y_train /= Y_train.max()
+        Y_train -= 1
+        Y_train *= -1.0
     elif data_idx == 1: 
         TRAIN=2748
 
