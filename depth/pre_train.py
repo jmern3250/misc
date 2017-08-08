@@ -319,13 +319,21 @@ def DACNet(X, is_training, data):
     # composite = tf.concat([bn3_, bn2_, tc5], axis=3)
     bn_comp = tf.layers.batch_normalization(
                     composite, training=is_training, name='bn_comp')
-    upscale = tf.layers.conv2d_transpose(
+    up4 = tf.layers.conv2d_transpose(
             inputs=bn_comp,
-            filters=500,
+            filters=100,
             kernel_size=[2,2],
-            strides=8,
+            strides=4,
             activation=tf.nn.relu,
             name='up4'
+    )
+    up5 = tf.layers.conv2d_transpose(
+            inputs=up4,
+            filters=100,
+            kernel_size=[2,2],
+            strides=4,
+            activation=tf.nn.relu,
+            name='up5'
     )
     output = tf.layers.conv2d(
             inputs=upscale,
