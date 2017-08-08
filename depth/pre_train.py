@@ -336,7 +336,7 @@ def DACNet(X, is_training, data):
             name='up5'
     )
     output = tf.layers.conv2d(
-            inputs=upscale,
+            inputs=up5,
             filters=1,
             kernel_size=[2,2],
             strides=2,
