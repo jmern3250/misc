@@ -77,13 +77,13 @@ def load_data(data_idx):
         Y_train = np.zeros([TRAIN, 240, 420, 1])
 
         i = 0
-        for filename in glob.glob('/home/jmern91/Python_add/misc/depth/data/AirSim/scene/train/*'): #assuming gif
+        for filename in glob.glob('./data/AirSim/scene/train/*'): #assuming gif
             im=Image.open(filename)
             X_train[i,:,:,:] = np.array(im)[:240,:420,:]/255.0
             i += 1
 
         i = 0
-        for filename in glob.glob('/home/jmern91/Python_add/misc/depth/data/AirSim/depth/train/*'): #assuming gif
+        for filename in glob.glob('./data/AirSim/depth/train/*'): #assuming gif
             im=Image.open(filename)
             img_array = np.array(im)
             if img_array.ndim == 3:
