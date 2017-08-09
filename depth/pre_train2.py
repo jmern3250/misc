@@ -11,70 +11,9 @@ import math
 import timeit
 
 def main(args):
-    def run_model(session, loss_val, Xd, Yd, 
-                  epochs=1, batch_size=64, print_every=100,
-                  training=None, plot_losses=False):
-        
-        # shuffle indicies
-        train_indicies = np.arange(Xd.shape[0])
-        np.random.shuffle(train_indicies)
-
-        training_now = training is not None
-        
-        # setting up variables we want to compute (and optimizing)
-        # if we have a training function, add that to things we compute
-        variables = [loss_val]
-        if training_now:
-            variables.append(training)
-    #     pdb.set_trace()
-        # counter 
-        iter_cnt = 0
-        for e in range(epochs):
-            # keep track of losses
-            losses = []
-            
-            # make sure we iterate over the dataset once
-            for i in range(int(math.ceil(Xd.shape[0]/batch_size))):
-                # generate indicies for the batch
-                start_idx = (i*batch_size)%Xd.shape[0]
-                idx = train_indicies[start_idx:start_idx+batch_size]
-                
-                # create a feed dictionary for this batch
-                feed_dict = {X: Xd[idx,:],
-                             Y: Yd[idx,:],
-                             is_training: training_now}
-                # get batch size
-                actual_batch_size = Yd[i:i+batch_size].shape[0]
-                
-                # have tensorflow compute loss and correct predictions
-                # and (if given) perform a training step
-                if training_now:
-                    loss, _ = session.run(variables,feed_dict=feed_dict)
-                else: 
-                    loss = session.run(variables,feed_dict=feed_dict)
-                # aggregate performance stats
-    #             pdb.set_trace()
-                losses.append(loss*actual_batch_size)
-                
-                # print every now and then
-                if training_now and (iter_cnt % print_every) == 0:
-                    print("Iteration %r: with minibatch training loss = %r " % (iter_cnt,loss))
-                iter_cnt += 1
-    #         pdb.set_trace()
-            total_loss = np.sum(losses)/Xd.shape[0]
-            print("Epoch {1}, Overall loss = {0:.3g}"\
-                  .format(total_loss,e+1))
-            if plot_losses:
-                plt.plot(losses)
-                plt.grid(True)
-                plt.title('Epoch {} Loss'.format(e+1))
-                plt.xlabel('minibatch number')
-                plt.ylabel('minibatch loss')
-                plt.show()
-        return total_loss
-
     X_train, Y_train = load_data(args.data)
     Y_train_ = np.stack([Y_train.squeeze()]*3,axis=3)
+    # import pdb; pdb.set_trace()
     # dev = tf.device('/cpu:0')
     if args.GPU == 0:
         config = tf.ConfigProto(
@@ -91,7 +30,6 @@ def main(args):
     elif args.data == 1:
         X = tf.placeholder(tf.float32, [None, 245, 437, 3])
         Y = tf.placeholder(tf.float32, [None, 245, 437, 1])
-    LR = tf.placeholder(tf.float32)
     is_training = tf.placeholder(tf.bool)
     
     output = DACNet(X, is_training, args.data)
@@ -111,9 +49,10 @@ def main(args):
 
     sess.run(tf.global_variables_initializer())
     # import pdb; pdb.set_trace()
-    _ = run_model(sess, mean_loss, Y_train_, Y_train, 
+    _ = run_model(sess, X, Y, is_training, mean_loss, Y_train_, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, 
-              print_every=100, training=train_step, plot_losses=False)
+              print_every=100, training=train_step, plot_losses=False,
+              writer=writer, sum_vars=merged)
     model_name = './Models/PT_'
     model_name += 'data_' + str(args.data)
     model_name += '_epochs_' + str(args.epochs)
@@ -132,19 +71,19 @@ def load_data(data_idx):
         Y_train -= 1
         Y_train *= -1.0
     elif data_idx == 1: 
-        TRAIN=2748
+        TRAIN=1963
 
         X_train = np.zeros([TRAIN, 245, 437, 3])
         Y_train = np.zeros([TRAIN, 245, 437, 1])
 
         i = 0
-        for filename in glob.glob('./data/AirSim/scene/train/*'): #assuming gif
+        for filename in glob.glob('./data/AirSim/Scene/*'): 
             im=Image.open(filename)
             X_train[i,:,:,:] = np.array(im)[:,:,:]/255.0
             i += 1
 
         i = 0
-        for filename in glob.glob('./data/AirSim/depth/train/*'): #assuming gif
+        for filename in glob.glob('./data/AirSim/Depth/*'): 
             im=Image.open(filename)
             img_array = np.array(im)
             if img_array.ndim == 3:
@@ -153,6 +92,67 @@ def load_data(data_idx):
             i += 1
 
     return X_train, Y_train
+
+def run_model(session, X, Y, is_training, loss_val, Xd, Yd, 
+              epochs=1, batch_size=64, print_every=100,
+              training=None, plot_losses=False,writer=None, sum_vars=None):
+    
+    # shuffle indicies
+    train_indicies = np.arange(Xd.shape[0])
+    np.random.shuffle(train_indicies)
+    
+    # setting up variables we want to compute (and optimizing)
+    # if we have a training function, add that to things we compute
+    variables = [loss_val, training]
+    if writer is not None: 
+        variables.append(sum_vars)
+
+    # counter 
+    iter_cnt = 0
+    for e in range(epochs):
+        losses = []
+        
+        # make sure we iterate over the dataset once
+        for i in range(int(math.ceil(Xd.shape[0]/batch_size))):
+            # generate indicies for the batch
+            start_idx = (i*batch_size)%Xd.shape[0]
+            idx = train_indicies[start_idx:start_idx+batch_size]
+            
+            # create a feed dictionary for this batch
+            feed_dict = {X: Xd[idx,:],
+                         Y: Yd[idx,:],
+                         is_training: True}
+            # get batch size
+            actual_batch_size = Yd[i:i+batch_size].shape[0]
+            
+            # have tensorflow compute loss and correct predictions
+            # and (if given) perform a training step
+            if writer is not None:
+                # import pdb; pdb.set_trace()
+                loss, _, summary = session.run(variables,feed_dict=feed_dict)
+                # import pdb; pdb.set_trace()
+                writer.add_summary(summary, iter_cnt)
+            else:
+                loss, _ = session.run(variables,feed_dict=feed_dict)
+            # aggregate performance stats
+            losses.append(loss*actual_batch_size)
+            
+            # print every now and then
+            if (iter_cnt % print_every) == 0:
+                print("Iteration %r: with minibatch training loss = %r " % (iter_cnt,loss))
+            iter_cnt += 1
+#         pdb.set_trace()
+        total_loss = np.sum(losses)/Xd.shape[0]
+        print("Epoch {1}, Overall loss = {0:.3g}"\
+              .format(total_loss,e+1))
+        if plot_losses:
+            plt.plot(losses)
+            plt.grid(True)
+            plt.title('Epoch {} Loss'.format(e+1))
+            plt.xlabel('minibatch number')
+            plt.ylabel('minibatch loss')
+            plt.show()
+    return total_loss
 
 
 def conv_group(X, conv_params):
