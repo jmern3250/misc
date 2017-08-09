@@ -198,7 +198,6 @@ def DACNet(X, is_training, data):
                         name='c1')
     bn1 = tf.layers.batch_normalization(
                     c1, training=is_training, name='bn1')
-    # p1 = tf.nn.max_pool(c1, [1,2,2,1],[1,2,2,1],'VALID')
 
     c2 = tf.layers.conv2d(
                         inputs=bn1, 
@@ -209,7 +208,6 @@ def DACNet(X, is_training, data):
                         name='c2')
     bn2 = tf.layers.batch_normalization(
                     c2, training=is_training, name='bn2')
-    # p2 = tf.nn.max_pool(c2, [1,2,2,1],[1,2,2,1],'VALID')
 
     c3 = tf.layers.conv2d(
                         inputs=bn2, 
@@ -220,7 +218,6 @@ def DACNet(X, is_training, data):
                         name='c3')
     bn3 = tf.layers.batch_normalization(
                     c3, training=is_training, name='bn3')
-    # p3 = tf.nn.max_pool(c3, [1,2,2,1],[1,2,2,1],'VALID')
 
     c4 = tf.layers.conv2d(
                         inputs=bn3, 
@@ -231,22 +228,10 @@ def DACNet(X, is_training, data):
                         name='c4')
     bn4 = tf.layers.batch_normalization(
                     c4, training=is_training, name='bn4')
-    # p4 = tf.nn.max_pool(c4, [1,2,2,1],[1,2,2,1],'VALID')
-
-    # c5 = tf.layers.conv2d(
-    #                     inputs=bn4, 
-    #                     filters=256,
-    #                     kernel_size=[1,1],
-    #                     strides=1,
-    #                     padding='valid',
-    #                     name='c5')
-    # bn5 = tf.layers.batch_normalization(
-    #                 c5, training=is_training, name='bn5')
-
     
     if data == 0:
         tc5 = tf.layers.conv2d_transpose(
-                inputs=bn5,
+                inputs=bn4,
                 filters=256,
                 kernel_size=[2,2],
                 strides=4,
@@ -303,28 +288,35 @@ def DACNet(X, is_training, data):
 
     composite = bn3_ + bn2_ + tc5
     # composite = tf.concat([bn3_, bn2_, tc5], axis=3)
-    bn_comp = tf.layers.batch_normalization(
-                    composite, training=is_training, name='bn_comp')
+
     up4 = tf.layers.conv2d_transpose(
-            inputs=bn_comp,
-            filters=100,
+            inputs=composite,
+            filters=256,
             kernel_size=[2,2],
-            strides=4,
+            strides=2,
             activation=tf.nn.relu,
             name='up4'
     )
     up5 = tf.layers.conv2d_transpose(
             inputs=up4,
-            filters=100,
+            filters=128,
             kernel_size=[3,3],
             strides=2,
             activation=tf.nn.relu,
             name='up5'
     )
-    output = tf.layers.conv2d(
+    up6 = tf.layers.conv2d_transpose(
             inputs=up5,
+            filters=64,
+            kernel_size=[3,3],
+            strides=2,
+            activation=tf.nn.relu,
+            name='up6'
+    )
+    output = tf.layers.conv2d(
+            inputs=up6,
             filters=1,
-            kernel_size=[1,1],
+            kernel_size=[2,2],
             strides=2,
             activation=tf.nn.relu, 
             name='c7'
