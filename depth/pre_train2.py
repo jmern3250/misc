@@ -340,8 +340,8 @@ def DACNet(X, is_training, data):
             activation=tf.nn.relu, 
             name='c7'
     )
-    print(X.shape)
-    print(output.shape)
+    # print(X.shape)
+    # print(output.shape)
     return output
 
 if __name__ == '__main__':
