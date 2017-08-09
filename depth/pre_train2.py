@@ -242,7 +242,7 @@ def DACNet(X, is_training, data):
         bn3_ = tf.layers.conv2d_transpose(
                 inputs=bn3,
                 filters=256,
-                kernel_size=[2,2],
+                kernel_size=[4,4],
                 strides=2,
                 activation=tf.nn.relu,
                 name='up2'
