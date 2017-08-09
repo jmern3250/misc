@@ -282,9 +282,9 @@ def DACNet(X, is_training, data):
                 activation=tf.nn.relu,
                 name='c6')
 
-    # print(tc5.shape)
-    # print(bn3_.shape)
-    # print(bn2_.shape)
+    print(tc5.shape)
+    print(bn3_.shape)
+    print(bn2_.shape)
 
     composite = bn3_ + bn2_ + tc5
     # composite = tf.concat([bn3_, bn2_, tc5], axis=3)
@@ -340,8 +340,8 @@ def DACNet(X, is_training, data):
             activation=tf.nn.relu, 
             name='c7'
     )
-    # print(X.shape)
-    # print(output.shape)
+    print(X.shape)
+    print(output.shape)
     return output
 
 if __name__ == '__main__':
