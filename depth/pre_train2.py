@@ -13,7 +13,6 @@ import timeit
 def main(args):
     X_train, Y_train = load_data(args.data)
     Y_train_ = np.stack([Y_train.squeeze()]*3,axis=3)
-    # import pdb; pdb.set_trace()
     # dev = tf.device('/cpu:0')
     if args.GPU == 0:
         config = tf.ConfigProto(
@@ -33,7 +32,7 @@ def main(args):
     is_training = tf.placeholder(tf.bool)
     
     output = DACNet(X, is_training, args.data)
-    
+    # import pdb; pdb.set_trace()
     loss = tf.nn.l2_loss(output-Y)
     mean_loss = tf.reduce_mean(loss)
     tf.summary.scalar('loss', mean_loss)
@@ -45,13 +44,11 @@ def main(args):
     saver = tf.train.Saver()
     merged = tf.summary.merge_all()
     writer = tf.summary.FileWriter('./tb',sess.graph)
-    # import pdb; pdb.set_trace()
 
     sess.run(tf.global_variables_initializer())
-    # import pdb; pdb.set_trace()
     _ = run_model(sess, X, Y, is_training, mean_loss, Y_train_, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, 
-              print_every=100, training=train_step, plot_losses=False,
+              print_every=10, training=train_step, plot_losses=False,
               writer=writer, sum_vars=merged)
     model_name = './Models/PT_'
     model_name += 'data_' + str(args.data)
@@ -141,7 +138,6 @@ def run_model(session, X, Y, is_training, loss_val, Xd, Yd,
             if (iter_cnt % print_every) == 0:
                 print("Iteration %r: with minibatch training loss = %r " % (iter_cnt,loss))
             iter_cnt += 1
-#         pdb.set_trace()
         total_loss = np.sum(losses)/Xd.shape[0]
         print("Epoch {1}, Overall loss = {0:.3g}"\
               .format(total_loss,e+1))
