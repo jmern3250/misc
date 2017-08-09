@@ -282,9 +282,9 @@ def DACNet(X, is_training, data):
                 activation=tf.nn.relu,
                 name='c6')
 
-    print(tc5.shape)
-    print(bn3_.shape)
-    print(bn2_.shape)
+    # print(tc5.shape)
+    # print(bn3_.shape)
+    # print(bn2_.shape)
 
     composite = bn3_ + bn2_ + tc5
     # composite = tf.concat([bn3_, bn2_, tc5], axis=3)
@@ -301,7 +301,7 @@ def DACNet(X, is_training, data):
         up5 = tf.layers.conv2d_transpose(
                 inputs=up4,
                 filters=128,
-                kernel_size=[3,3],
+                kernel_size=[2,2],
                 strides=2,
                 activation=tf.nn.relu,
                 name='up5'
