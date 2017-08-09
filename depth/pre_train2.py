@@ -297,22 +297,41 @@ def DACNet(X, is_training, data):
             activation=tf.nn.relu,
             name='up4'
     )
-    up5 = tf.layers.conv2d_transpose(
-            inputs=up4,
-            filters=128,
-            kernel_size=[3,3],
-            strides=2,
-            activation=tf.nn.relu,
-            name='up5'
-    )
-    up6 = tf.layers.conv2d_transpose(
-            inputs=up5,
-            filters=64,
-            kernel_size=[3,3],
-            strides=2,
-            activation=tf.nn.relu,
-            name='up6'
-    )
+    if data == 0:
+        up5 = tf.layers.conv2d_transpose(
+                inputs=up4,
+                filters=128,
+                kernel_size=[3,3],
+                strides=2,
+                activation=tf.nn.relu,
+                name='up5'
+        )
+        up6 = tf.layers.conv2d_transpose(
+                inputs=up5,
+                filters=64,
+                kernel_size=[2,2],
+                strides=2,
+                activation=tf.nn.relu,
+                name='up6'
+        )
+    else: 
+        up5 = tf.layers.conv2d_transpose(
+                inputs=up4,
+                filters=128,
+                kernel_size=[3,3],
+                strides=2,
+                activation=tf.nn.relu,
+                name='up5'
+        )
+        up6 = tf.layers.conv2d_transpose(
+                inputs=up5,
+                filters=64,
+                kernel_size=[3,3],
+                strides=2,
+                activation=tf.nn.relu,
+                name='up6'
+        )
+
     output = tf.layers.conv2d(
             inputs=up6,
             filters=1,
