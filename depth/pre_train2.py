@@ -32,7 +32,7 @@ def main(args):
     is_training = tf.placeholder(tf.bool)
     
     output = DACNet(X, is_training, args.data)
-    # import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace+()
     loss = tf.nn.l2_loss(output-Y)
     mean_loss = tf.reduce_mean(loss)
     tf.summary.scalar('loss', mean_loss)
@@ -191,6 +191,7 @@ def DACNet(X, is_training, data):
                         kernel_size=[2,2],
                         strides=2,
                         padding='valid',
+                        activation=tf.nn.relu,
                         name='c1')
     bn1 = tf.layers.batch_normalization(
                     c1, training=is_training, name='bn1')
@@ -201,6 +202,7 @@ def DACNet(X, is_training, data):
                         kernel_size=[2,2],
                         strides=2,
                         padding='valid',
+                        activation=tf.nn.relu,
                         name='c2')
     bn2 = tf.layers.batch_normalization(
                     c2, training=is_training, name='bn2')
@@ -211,6 +213,7 @@ def DACNet(X, is_training, data):
                         kernel_size=3,
                         strides=2,
                         padding='valid',
+                        activation=tf.nn.relu,
                         name='c3')
     bn3 = tf.layers.batch_normalization(
                     c3, training=is_training, name='bn3')
@@ -221,6 +224,7 @@ def DACNet(X, is_training, data):
                         kernel_size=[1,1],
                         strides=2,
                         padding='valid',
+                        activation=tf.nn.relu,
                         name='c4')
     bn4 = tf.layers.batch_normalization(
                     c4, training=is_training, name='bn4')
