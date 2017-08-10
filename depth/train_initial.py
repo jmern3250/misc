@@ -57,14 +57,14 @@ def main(args):
     writer = tf.summary.FileWriter('./tb',sess.graph)
 
     # sess.run(tf.global_variables_initializer())
-    enc_saver.restore(sess, './PT_Models/PT_data_1_epochs_5_batchsize_5_rate_0.001_enc')
-    dec_saver.restore(sess, './PT_Models/PT_data_1_epochs_5_batchsize_5_rate_0.001_dec')
+    enc_saver.restore(sess, './PT_Model/PT_data_1_epochs_5_batchsize_5_rate_0.001_enc')
+    dec_saver.restore(sess, './PT_Model/PT_data_1_epochs_5_batchsize_5_rate_0.001_dec')
 
     _ = run_model(sess, X, Y, is_training, mean_loss, Y_train_, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, 
               print_every=10, training=train_full, plot_losses=False,
               writer=writer, sum_vars=merged)
-    model_name = './T_Models/'
+    model_name = './T_Model/'
     model_name += 'data_' + str(args.data)
     model_name += '_epochs_' + str(args.epochs)
     model_name += '_batchsize_' + str(args.batch_size)
