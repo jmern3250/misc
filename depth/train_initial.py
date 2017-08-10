@@ -60,7 +60,7 @@ def main(args):
     enc_saver.restore(sess, './PT_Model/PT_data_1_epochs_5_batchsize_5_rate_0.001_enc')
     dec_saver.restore(sess, './PT_Model/PT_data_1_epochs_5_batchsize_5_rate_0.001_dec')
 
-    _ = run_model(sess, X, Y, is_training, mean_loss, Y_train_, Y_train, 
+    _ = run_model(sess, X, Y, is_training, mean_loss, X_train, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, 
               print_every=10, training=train_full, plot_losses=False,
               writer=writer, sum_vars=merged)
