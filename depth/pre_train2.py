@@ -202,7 +202,9 @@ def DACNet(X, is_training, data):
                         activation=tf.nn.relu,
                         name='c1')
     bn1 = tf.layers.batch_normalization(
-                    c1, training=is_training, name='bn1')
+                    c1, training=is_training,
+                    renorm=True,  
+                    name='bn1')
 
     c2 = tf.layers.conv2d(
                         inputs=bn1, 
@@ -213,7 +215,9 @@ def DACNet(X, is_training, data):
                         activation=tf.nn.relu,
                         name='c2')
     bn2 = tf.layers.batch_normalization(
-                    c2, training=is_training, name='bn2')
+                    c2, training=is_training, 
+                    renorm=True,
+                    name='bn2')
 
     c3 = tf.layers.conv2d(
                         inputs=bn2, 
@@ -224,7 +228,9 @@ def DACNet(X, is_training, data):
                         activation=tf.nn.relu,
                         name='c3')
     bn3 = tf.layers.batch_normalization(
-                    c3, training=is_training, name='bn3')
+                    c3, training=is_training, 
+                    renorm=True,
+                    name='bn3')
 
     c4 = tf.layers.conv2d(
                         inputs=bn3, 
@@ -235,7 +241,9 @@ def DACNet(X, is_training, data):
                         activation=tf.nn.relu,
                         name='c4')
     bn4 = tf.layers.batch_normalization(
-                    c4, training=is_training, name='bn4')
+                    c4, training=is_training, 
+                    renorm=True,
+                    name='bn4')
     
     if data == 0:
         tc5 = tf.layers.conv2d_transpose(
@@ -319,7 +327,7 @@ def DACNet(X, is_training, data):
                 filters=64,
                 kernel_size=[2,2],
                 strides=2,
-                activation=tf.nn.relu,
+                activation=tf.tanh,
                 name='up6'
         )
     else: 
@@ -336,7 +344,7 @@ def DACNet(X, is_training, data):
                 filters=64,
                 kernel_size=[3,3],
                 strides=2,
-                activation=tf.nn.relu,
+                activation=tf.tanh,
                 name='up6'
         )
 
@@ -348,8 +356,7 @@ def DACNet(X, is_training, data):
             activation=None, 
             name='c7'
     )
-    # print(X.shape)
-    # print(output.shape)
+
     return output
 
 if __name__ == '__main__':
