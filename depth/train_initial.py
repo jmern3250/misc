@@ -56,7 +56,7 @@ def main(args):
     merged = tf.summary.merge_all()
     writer = tf.summary.FileWriter('./tb',sess.graph)
 
-    # sess.run(tf.global_variables_initializer())
+    sess.run(tf.global_variables_initializer())
     enc_saver.restore(sess, './PT_Model/PT_data_1_epochs_5_batchsize_5_rate_0.001_enc')
     dec_saver.restore(sess, './PT_Model/PT_data_1_epochs_5_batchsize_5_rate_0.001_dec')
 
