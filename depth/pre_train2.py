@@ -337,7 +337,7 @@ def DACNet(X, is_training, data):
             filters=1,
             kernel_size=[2,2],
             strides=2,
-            activation=tf.nn.relu, 
+            activation=None, 
             name='c7'
     )
     # print(X.shape)
