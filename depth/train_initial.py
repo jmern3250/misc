@@ -37,7 +37,7 @@ def main(args):
         output = decoder(hc, is_training, args.data)
 
     # import pdb; pdb.set_trace+()
-    trans_loss = tf.nn.l2_loss(output-Y)
+    loss = tf.nn.l2_loss(output-Y)
     
     mean_loss = tf.reduce_mean(loss)
     tf.summary.scalar('loss', mean_loss)
