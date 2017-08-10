@@ -31,17 +31,27 @@ def main(args):
         Y = tf.placeholder(tf.float32, [None, 245, 437, 1])
     is_training = tf.placeholder(tf.bool)
     
-    output = DACNet(X, is_training, args.data)
+    with tf.variable_scope('Encoder') as enc: 
+        hc = encoder(X, is_training, args.data)
+    with tf.variable_scope('Decoder') as dec:
+        output = decoder(hc, is_training, args.data)
+
     # import pdb; pdb.set_trace+()
     loss = tf.nn.l2_loss(output-Y)
     mean_loss = tf.reduce_mean(loss)
     tf.summary.scalar('loss', mean_loss)
 
     optimizer = tf.train.AdamOptimizer(learning_rate=args.rate)
-    train_step = optimizer.minimize(mean_loss)
+    extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    enc_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Encoder')
+    dec_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Decoder')
+    with tf.control_dependencies(extra_update_ops):
+        train_full = optimizer.minimize(mean_loss)
+        train_enc = optimizer.minimize(mean_loss, var_list=enc_vars)
     
     sess = tf.Session(config=config)
-    saver = tf.train.Saver()
+    enc_saver = tf.train.Saver(var_list=enc_vars)
+    dec_saver = tf.train.Saver(var_list=dec_vars)
     merged = tf.summary.merge_all()
     writer = tf.summary.FileWriter('./tb',sess.graph)
 
@@ -56,7 +66,8 @@ def main(args):
     model_name += '_batchsize_' + str(args.batch_size)
     model_name += '_rate_' + str(args.rate)
     model_name += '_decay_' + str(args.decay)
-    saver.save(sess, model_name)
+    enc_saver.save(sess, model_name+'_enc')
+    dec_saver.save(sess, model_name+'_dec')
 
 def load_data(data_idx, num=None):
     if data_idx == 0:
@@ -191,7 +202,7 @@ def conv_group(X, conv_params):
                                 )
     return conv_layers[layers-1]  
 
-def DACNet(X, is_training, data):
+def encoder(X, is_training, data):
 
     c1 = tf.layers.conv2d(
                         inputs=X, 
@@ -312,7 +323,9 @@ def DACNet(X, is_training, data):
                     composite, training=is_training,
                     renorm=True, name = 'bnc')
     hc = tf.nn.relu(bnc, name='hc')
+    return hc 
 
+    def decoder(hc, is_training, data):
     up4 = tf.layers.conv2d_transpose(
             inputs=hc,
             filters=256,
@@ -385,7 +398,6 @@ def DACNet(X, is_training, data):
             activation=None, 
             name='c7'
     )
-
     return output
 
 if __name__ == '__main__':
@@ -394,7 +406,6 @@ if __name__ == '__main__':
     parser.add_argument('epochs', type=int) #0:NYU, 1:Airsim
     parser.add_argument('batch_size', type=int) #0:NYU, 1:Airsim
     parser.add_argument('rate', type=float) #0:NYU, 1:Airsim
-    parser.add_argument('decay', type=float) 
     parser.add_argument('GPU', type=int) 
     args = parser.parse_args()
     main(args)
