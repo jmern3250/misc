@@ -65,7 +65,6 @@ def main(args):
     model_name += '_epochs_' + str(args.epochs)
     model_name += '_batchsize_' + str(args.batch_size)
     model_name += '_rate_' + str(args.rate)
-    model_name += '_decay_' + str(args.decay)
     enc_saver.save(sess, model_name+'_enc')
     dec_saver.save(sess, model_name+'_dec')
 
