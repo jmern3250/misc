@@ -58,7 +58,7 @@ def main(args):
     model_name += '_decay_' + str(args.decay)
     saver.save(sess, model_name)
 
-def load_data(data_idx):
+def load_data(data_idx, num=None):
     if data_idx == 0:
         mat_contents = sio.loadmat('./data/NYU_data.mat')
         X_train = mat_contents['images'].transpose([3,0,1,2])/255.0
@@ -68,7 +68,10 @@ def load_data(data_idx):
         Y_train -= 1
         Y_train *= -1.0
     elif data_idx == 1: 
-        TRAIN=1963
+        if num is not None: 
+            TRAIN=num
+        else:
+            TRAIN=1963 
 
         X_train = np.zeros([TRAIN, 245, 437, 3])
         Y_train = np.zeros([TRAIN, 245, 437, 1])
@@ -78,6 +81,9 @@ def load_data(data_idx):
             im=Image.open(filename)
             X_train[i,:,:,:] = np.array(im)[:,:,:]/255.0
             i += 1
+            # import pdb; pdb.set_trace()
+            if i == TRAIN: 
+                break
 
         i = 0
         for filename in glob.glob('./data/AirSim/Depth/*'): 
@@ -87,6 +93,8 @@ def load_data(data_idx):
                 img_array = img_array[:,:,0]
             Y_train[i,:,:,0] = img_array[:,:]/255.0
             i += 1
+            if i == TRAIN:
+                break 
 
     return X_train, Y_train
 
