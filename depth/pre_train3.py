@@ -58,7 +58,7 @@ def main(args):
     sess.run(tf.global_variables_initializer())
     _ = run_model(sess, X, Y, is_training, mean_loss, Y_train_, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, 
-              print_every=10, training=train_step, plot_losses=False,
+              print_every=10, training=train_full, plot_losses=False,
               writer=writer, sum_vars=merged)
     model_name = './Models/PT_'
     model_name += 'data_' + str(args.data)
