@@ -325,7 +325,7 @@ def encoder(X, is_training, data):
     hc = tf.nn.relu(bnc, name='hc')
     return hc 
 
-    def decoder(hc, is_training, data):
+def decoder(hc, is_training, data):
     up4 = tf.layers.conv2d_transpose(
             inputs=hc,
             filters=256,
