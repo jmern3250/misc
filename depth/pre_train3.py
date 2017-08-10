@@ -37,7 +37,8 @@ def main(args):
         output = decoder(hc, is_training, args.data)
 
     # import pdb; pdb.set_trace+()
-    loss = tf.nn.l2_loss(output-Y)
+    trans_loss = tf.nn.l2_loss(output-Y)
+    
     mean_loss = tf.reduce_mean(loss)
     tf.summary.scalar('loss', mean_loss)
 
@@ -87,7 +88,7 @@ def load_data(data_idx, num=None):
         Y_train = np.zeros([TRAIN, 245, 437, 1])
 
         i = 0
-        for filename in glob.glob('./data/AirSim/Scene/*'): 
+        for filename in sorted(glob.glob('./data/AirSim/Scene/*.jpg')): 
             im=Image.open(filename)
             X_train[i,:,:,:] = np.array(im)[:,:,:]/255.0
             i += 1
@@ -96,7 +97,7 @@ def load_data(data_idx, num=None):
                 break
 
         i = 0
-        for filename in glob.glob('./data/AirSim/Depth/*'): 
+        for filename in sorted(glob.glob('./data/AirSim/Depth/*.jpg')): 
             im=Image.open(filename)
             img_array = np.array(im)
             if img_array.ndim == 3:
