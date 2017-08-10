@@ -61,7 +61,7 @@ def main(args):
               epochs=args.epochs, batch_size=args.batch_size, 
               print_every=10, training=train_full, plot_losses=False,
               writer=writer, sum_vars=merged)
-    model_name = './Models/PT_'
+    model_name = './PT_Models/PT_'
     model_name += 'data_' + str(args.data)
     model_name += '_epochs_' + str(args.epochs)
     model_name += '_batchsize_' + str(args.batch_size)
