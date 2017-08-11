@@ -41,7 +41,7 @@ def main(args):
 
     trans_loss = tf.nn.l2_loss(output-Y)
     feat_loss = tf.nn.l2_loss(latent_x-latent_y)
-    total_loss = trans_loss - feat_loss*args.lam    
+    total_loss = trans_loss + feat_loss*args.lam    
 
     mean_loss = tf.reduce_mean(total_loss)
     tf.summary.scalar('loss', mean_loss)
