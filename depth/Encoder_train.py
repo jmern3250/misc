@@ -145,7 +145,6 @@ def run_model(session, X, Y, is_training, loss_val, Xd, Yd,
             # create a feed dictionary for this batch
             feed_dict = {X: Xd[idx,:],
                          Y: Yd[idx,:],
-                         Y_: Yd_[idx,:],
                          is_training: True}
             # get batch size
             actual_batch_size = Yd[i:i+batch_size].shape[0]
