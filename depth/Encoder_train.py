@@ -64,7 +64,7 @@ def main(args):
     sess.run(tf.global_variables_initializer())
     enc_saver.restore(sess, './PT_Model/PT_data_1_epochs_20_batchsize_5_rate_0.001_lambda_0.001_enc')
     dec_saver.restore(sess, './PT_Model/PT_data_1_epochs_20_batchsize_5_rate_0.001_lambda_0.001_dec')
-    _ = run_model(sess, X, Y, Y_, is_training, mean_loss, X_train, Y_train, Y_train_, 
+    _ = run_model(sess, X, Y, is_training, mean_loss, X_train, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, 
               print_every=10, training=train_enc, plot_losses=False,
               writer=writer, sum_vars=merged)
@@ -117,7 +117,7 @@ def load_data(data_idx, num=None):
 
     return X_train, Y_train
 
-def run_model(session, X, Y, Y_, is_training, loss_val, Xd, Yd, Yd_, 
+def run_model(session, X, Y, is_training, loss_val, Xd, Yd, 
               epochs=1, batch_size=64, print_every=100,
               training=None, plot_losses=False,writer=None, sum_vars=None):
     
@@ -415,7 +415,7 @@ if __name__ == '__main__':
     parser.add_argument('epochs', type=int) #0:NYU, 1:Airsim
     parser.add_argument('batch_size', type=int) #0:NYU, 1:Airsim
     parser.add_argument('rate', type=float) 
-    parser.add_argument('lam', type=float) 
+    # parser.add_argument('lam', type=float) 
     parser.add_argument('GPU', type=int) 
     args = parser.parse_args()
     main(args)
