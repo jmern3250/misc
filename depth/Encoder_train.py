@@ -28,18 +28,23 @@ def main(args):
         Y = tf.placeholder(tf.float32, [None, 480, 640, 1])
     elif args.data == 1:
         X = tf.placeholder(tf.float32, [None, 245, 437, 3])
+        # Y_ = tf.placeholder(tf.float32, [None, 245, 437, 3])
         Y = tf.placeholder(tf.float32, [None, 245, 437, 1])
     is_training = tf.placeholder(tf.bool)
     
     with tf.variable_scope('Encoder') as enc: 
-        hc = encoder(X, is_training, args.data)
+        latent_y = encoder(X, is_training, args.data)
     with tf.variable_scope('Decoder') as dec:
-        output = decoder(hc, is_training, args.data)
+        output = decoder(latent_y, is_training, args.data)
+    # with tf.variable_scope(enc, reuse=True): 
+    #     latent_x = encoder(X, is_training, args.data)
 
-    # import pdb; pdb.set_trace+()
     trans_loss = tf.nn.l2_loss(output-Y)
-    
-    mean_loss = tf.reduce_mean(loss)
+    # feat_loss = tf.nn.l2_loss(latent_x-latent_y)
+    # total_loss = trans_loss + feat_loss*args.lam    
+
+    # mean_loss = tf.reduce_mean(total_loss)
+    mean_loss = tf.reduce_mean(trans_loss)
     tf.summary.scalar('loss', mean_loss)
 
     optimizer = tf.train.AdamOptimizer(learning_rate=args.rate)
@@ -57,15 +62,18 @@ def main(args):
     writer = tf.summary.FileWriter('./tb',sess.graph)
 
     sess.run(tf.global_variables_initializer())
-    _ = run_model(sess, X, Y, is_training, mean_loss, Y_train_, Y_train, 
+    enc_saver.restore(sess, './PT_Model/PT_data_1_epochs_20_batchsize_5_rate_0.001_lambda_0.001_enc')
+    dec_saver.restore(sess, './PT_Model/PT_data_1_epochs_20_batchsize_5_rate_0.001_lambda_0.001_dec')
+    _ = run_model(sess, X, Y, Y_, is_training, mean_loss, X_train, Y_train, Y_train_, 
               epochs=args.epochs, batch_size=args.batch_size, 
-              print_every=10, training=train_full, plot_losses=False,
+              print_every=10, training=train_enc, plot_losses=False,
               writer=writer, sum_vars=merged)
-    model_name = './PT_Models/PT_'
+    model_name = './E_Model/E_'
     model_name += 'data_' + str(args.data)
     model_name += '_epochs_' + str(args.epochs)
     model_name += '_batchsize_' + str(args.batch_size)
     model_name += '_rate_' + str(args.rate)
+    # model_name += '_lambda_' + str(args.lam)
     enc_saver.save(sess, model_name+'_enc')
     dec_saver.save(sess, model_name+'_dec')
 
@@ -109,7 +117,7 @@ def load_data(data_idx, num=None):
 
     return X_train, Y_train
 
-def run_model(session, X, Y, is_training, loss_val, Xd, Yd, 
+def run_model(session, X, Y, Y_, is_training, loss_val, Xd, Yd, Yd_, 
               epochs=1, batch_size=64, print_every=100,
               training=None, plot_losses=False,writer=None, sum_vars=None):
     
@@ -137,6 +145,7 @@ def run_model(session, X, Y, is_training, loss_val, Xd, Yd,
             # create a feed dictionary for this batch
             feed_dict = {X: Xd[idx,:],
                          Y: Yd[idx,:],
+                         Y_: Yd_[idx,:],
                          is_training: True}
             # get batch size
             actual_batch_size = Yd[i:i+batch_size].shape[0]
@@ -405,7 +414,8 @@ if __name__ == '__main__':
     parser.add_argument('data', type=int) #0:NYU, 1:Airsim
     parser.add_argument('epochs', type=int) #0:NYU, 1:Airsim
     parser.add_argument('batch_size', type=int) #0:NYU, 1:Airsim
-    parser.add_argument('rate', type=float) #0:NYU, 1:Airsim
+    parser.add_argument('rate', type=float) 
+    parser.add_argument('lam', type=float) 
     parser.add_argument('GPU', type=int) 
     args = parser.parse_args()
     main(args)
