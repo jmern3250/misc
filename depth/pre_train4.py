@@ -61,7 +61,7 @@ def main(args):
     writer = tf.summary.FileWriter('./tb',sess.graph)
 
     sess.run(tf.global_variables_initializer())
-    _ = run_model(sess, X, Y, is_training, mean_loss, Y_train_, Y_train, 
+    _ = run_model(sess, X, Y, Y_, is_training, mean_loss, X_train_, Y_train, Y_train_, 
               epochs=args.epochs, batch_size=args.batch_size, 
               print_every=10, training=train_full, plot_losses=False,
               writer=writer, sum_vars=merged)
