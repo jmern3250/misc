@@ -178,9 +178,9 @@ def decoder(feats, is_training, data):
                             strides=4, padding='valid',
                             activation='relu', name='t2')
 
-    c0_ = bn_conv2d_transpose(c0, is_training, 16, [18,18], 
-                            strides=4, padding='valid',
-                            activation='relu', name='c0_')
+    # c0_ = bn_conv2d_transpose(c0, is_training, 16, [18,18], 
+    #                         strides=4, padding='valid',
+    #                         activation='relu', name='c0_')
     c1_ = bn_conv2d_transpose(c1, is_training, 16, [26,26], 
                             strides=8, padding='valid',
                             activation='relu', name='c1_')
@@ -188,7 +188,7 @@ def decoder(feats, is_training, data):
                             strides=16, padding='valid',
                             activation='relu', name='c2_')
 
-    c_sum = t2 + c0_ + c1_ + c2_
+    c_sum = t2 + c1_ + c2_
 
     c_out = tf.layers.conv2d(
                             inputs=c_sum, 
