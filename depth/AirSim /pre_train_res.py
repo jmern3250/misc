@@ -42,7 +42,7 @@ def main(args):
         latent_x = encoder(X, is_training, args.data)
 
     trans_loss = tf.nn.l2_loss(output-Y)
-    feat_loss = tf.nn.l2_loss(latent_x-latent_y)
+    feat_loss = tf.nn.l2_loss(latent_x[-1]-latent_y[-1])
     total_loss = trans_loss + feat_loss*args.lam    
 
     mean_loss = tf.reduce_mean(total_loss)
