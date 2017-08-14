@@ -340,16 +340,16 @@ def decoder(feats, is_training, data):
     t0 = bn_conv2d_transpose(feats, is_training, 64, [3,3], 
                             strides=2, padding='valid',
                             activation='relu', name='t0')
-    t1 = bn_conv2d_transpose(t0, is_training, 32, [3,3], 
+    t1 = bn_conv2d_transpose(t0, is_training, 32, [5,5], 
                             strides=2, padding='valid',
                             activation='relu', name='t1')
-    t2 = bn_conv2d_transpose(t1, is_training, 16, [9,9], 
+    t2 = bn_conv2d_transpose(t1, is_training, 16, [10,10], 
                             strides=4, padding='valid',
                             activation='relu', name='t2')
     c0 = tf.layers.conv2d(
                             inputs=t2, 
                             filters=1,
-                            kernel_size=[3,3],
+                            kernel_size=[2,2],
                             strides=2,
                             padding='valid',
                             activation=tf.tanh,
