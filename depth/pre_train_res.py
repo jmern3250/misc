@@ -175,7 +175,7 @@ def run_model(session, X, Y, Y_, is_training, loss_val, Xd, Yd, Yd_,
             plt.show()
     return total_loss
 
-def bn_conv2d(X, filters, kernel_size, strides=1, padding='valid',activation='relu', name=None):
+def bn_conv2d(X, is_training, filters, kernel_size, strides=1, padding='valid',activation='relu', name=None):
     if name is not None: 
         with tf.variable_scope(name):
             c1 = tf.layers.conv2d(
@@ -217,7 +217,7 @@ def bn_conv2d(X, filters, kernel_size, strides=1, padding='valid',activation='re
             h1 = bn1
     return h1
 
-def bn_conv2d_transpose(X, filters, kernel_size, strides=1, padding='valid',activation='relu', name=None):
+def bn_conv2d_transpose(X, is_training, filters, kernel_size, strides=1, padding='valid',activation='relu', name=None):
     if name is not None: 
         with tf.variable_scope(name):
             c1 = tf.layers.conv2d_transpose(
@@ -259,7 +259,7 @@ def bn_conv2d_transpose(X, filters, kernel_size, strides=1, padding='valid',acti
             h1 = bn1
     return h1
 
-def res_conv2d(X, filters, kernel_size, strides=1, name=None):
+def res_conv2d(X, is_training, filters, kernel_size, strides=1, name=None):
     if name is not None: 
         with tf.variable_scope(name):
             c1 = tf.layers.conv2d(
@@ -321,29 +321,29 @@ def res_conv2d(X, filters, kernel_size, strides=1, name=None):
 
 
 def encoder(X, is_training, data):
-    c0 = bn_conv2d(X, 16, [9,9], 
+    c0 = bn_conv2d(X, is_training, 16, [9,9], 
                     strides=2, padding='valid',
                     activation='relu', name='c0')
-    c1 = bn_conv2d(c0, 32, [3,3], 
+    c1 = bn_conv2d(c0, is_training, 32, [3,3], 
                     strides=2, padding='valid',
                     activation='relu', name='c1')
-    c2 = bn_conv2d(c1, 64, [3,3], 
+    c2 = bn_conv2d(c1, is_training, 64, [3,3], 
                     strides=2, padding='valid',
                     activation='relu', name='c2')
-    r0 = res_conv2d(c2, 128, [3,3], strides=1, name='r0')
-    r1 = res_conv2d(r0, 128, [3,3], strides=1, name='r1')
-    r2 = res_conv2d(r1, 128, [3,3], strides=1, name='r2')
+    r0 = res_conv2d(c2, is_training, 128, [3,3], strides=1, name='r0')
+    r1 = res_conv2d(r0, is_training, 128, [3,3], strides=1, name='r1')
+    r2 = res_conv2d(r1, is_training, 128, [3,3], strides=1, name='r2')
     
     return r2
 
 def decoder(feats, is_training, data):
-    t0 = bn_conv2d_transpose(feats, 64, [3,3], 
+    t0 = bn_conv2d_transpose(feats, is_training, 64, [3,3], 
                             strides=2, padding='valid',
                             activation='relu', name='t0')
-    t1 = bn_conv2d_transpose(t0, 32, [3,3], 
+    t1 = bn_conv2d_transpose(t0, is_training, 32, [3,3], 
                             strides=2, padding='valid',
                             activation='relu', name='t1')
-    t2 = bn_conv2d_transpose(t1, 16, [9,9], 
+    t2 = bn_conv2d_transpose(t1, is_training, 16, [9,9], 
                             strides=4, padding='valid',
                             activation='relu', name='t2')
     c0 = tf.layers.conv2d(
