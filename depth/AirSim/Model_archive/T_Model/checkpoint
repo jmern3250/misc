@@ -1,0 +1,2 @@
+model_checkpoint_path: "T_data_1_epochs_20_batchsize_10_rate_0.0001_dec"
+all_model_checkpoint_paths: "T_data_1_epochs_20_batchsize_10_rate_0.0001_dec"
