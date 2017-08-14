@@ -321,13 +321,13 @@ def res_conv2d(X, is_training, filters, kernel_size, strides=1, name=None):
 
 
 def encoder(X, is_training, data):
-    c0 = bn_conv2d(X, is_training, 16, [9,9], 
+    c0 = bn_conv2d(X, is_training, 32, [9,9], 
                     strides=2, padding='valid',
                     activation='relu', name='c0')
-    c1 = bn_conv2d(c0, is_training, 32, [3,3], 
+    c1 = bn_conv2d(c0, is_training, 64, [3,3], 
                     strides=2, padding='valid',
                     activation='relu', name='c1')
-    c2 = bn_conv2d(c1, is_training, 64, [3,3], 
+    c2 = bn_conv2d(c1, is_training, 128, [3,3], 
                     strides=2, padding='valid',
                     activation='relu', name='c2')
     r0 = res_conv2d(c2, is_training, 128, [3,3], strides=1, name='r0')
