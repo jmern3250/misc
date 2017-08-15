@@ -69,7 +69,6 @@ def main(args):
     #           epochs=args.epochs, batch_size=args.batch_size, 
     #           print_every=10, training=train_full, plot_losses=False,
     #           writer=writer, sum_vars=merged)
-
     _ = run_model(sess, X, Y, is_training, mean_loss, X_train, Y_train, 
               epochs=args.l1_epochs, batch_size=args.batch_size, 
               print_every=10, training=train_l1, plot_losses=False,
