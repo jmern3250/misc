@@ -105,7 +105,7 @@ def res_conv2d(X, is_training, filters, kernel_size, strides=1, name=None):
                                 padding='same',
                                 activation=None,
                                 name='c2')
-            bn1 = instance_norm(c2, name='bn2')
+            bn2 = instance_norm(c2, name='bn2')
             added = bn2 + X
             # h2 = tf.nn.relu(added, name='h2')
     else: 
@@ -127,7 +127,7 @@ def res_conv2d(X, is_training, filters, kernel_size, strides=1, name=None):
                             padding='same',
                             activation=None,
                             name='c2')
-        bn1 = instance_norm(c2, name='bn2')
+        bn2 = instance_norm(c2, name='bn2')
         added = bn2 + X
         # h2 = tf.nn.relu(added, name='h2')
     return added
@@ -154,25 +154,29 @@ def encoder(X, is_training, data):
 def decoder(feats, is_training, data):
     c0, c1, c2, r4 = feats
 
-    t0 = bn_conv2d_transpose(r4, is_training, 64, [3,3], 
+    t0 = bn_conv2d_transpose(r4, is_training, 64, [5,5], 
                             strides=2, padding='valid',
                             activation='relu', name='t0')
-    t1 = bn_conv2d_transpose(t0, is_training, 32, [3,3], 
+    t1 = bn_conv2d_transpose(t0, is_training, 32, [5,5], 
                             strides=2, padding='valid',
                             activation='relu', name='t1')
-    t2 = bn_conv2d_transpose(t1, is_training, 16, [3,3], 
+    t2 = bn_conv2d_transpose(t1, is_training, 16, [5,5], 
                             strides=2, padding='valid',
                             activation='relu', name='t2')
 
     # c0_ = bn_conv2d_transpose(c0, is_training, 16, [18,18], 
     #                         strides=4, padding='valid',
     #                         activation='relu', name='c0_')
-    c1_ = bn_conv2d_transpose(c1, is_training, 16, [26,26], 
+    c1_ = bn_conv2d_transpose(c1, is_training, 16, [21,21], 
                             strides=4, padding='valid',
                             activation='relu', name='c1_')
-    c2_ = bn_conv2d_transpose(c2, is_training, 16, [42,42], 
+    c2_ = bn_conv2d_transpose(c2, is_training, 16, [29,29], 
                             strides=8, padding='valid',
                             activation='relu', name='c2_')
+
+    print(t2.shape)
+    print(c1_.shape)
+    print(c2_.shape)
 
     c_sum = t2 + c1_ + c2_
 
