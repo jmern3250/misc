@@ -176,9 +176,9 @@ def decoder(feats, is_training, data):
                             strides=8, padding='valid',
                             activation='relu', name='c2_')
 
-    print(t2.shape)
-    print(c1_.shape)
-    print(c2_.shape)
+    # print(t2.shape)
+    # print(c1_.shape)
+    # print(c2_.shape)
 
     c_sum = t2 + c1_ + c2_
 

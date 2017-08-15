@@ -60,15 +60,15 @@ def main(args):
     writer = tf.summary.FileWriter('./tb',sess.graph)
 
     sess.run(tf.global_variables_initializer())
-    _ = run_model(sess, X, Y, is_training, mean_loss, Y_train_, Y_train, 
-              epochs=args.pt_epochs, batch_size=args.batch_size, 
-              print_every=10, training=train_full, plot_losses=False,
-              writer=writer, sum_vars=merged)
+    # _ = run_model(sess, X, Y, is_training, mean_loss, Y_train_, Y_train, 
+    #           epochs=args.pt_epochs, batch_size=args.batch_size, 
+    #           print_every=10, training=train_full, plot_losses=False,
+    #           writer=writer, sum_vars=merged)
 
-    _ = run_model(sess, X, Y, is_training, mean_loss, X_train, Y_train, 
-              epochs=args.epochs, batch_size=args.batch_size, 
-              print_every=10, training=train_full, plot_losses=False,
-              writer=writer, sum_vars=merged)
+    # _ = run_model(sess, X, Y, is_training, mean_loss, X_train, Y_train, 
+    #           epochs=args.epochs, batch_size=args.batch_size, 
+    #           print_every=10, training=train_full, plot_losses=False,
+    #           writer=writer, sum_vars=merged)
 
     _ = run_model(sess, X, Y, is_training, mean_loss, X_train, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, 
@@ -184,7 +184,8 @@ def run_model(session, X, Y, is_training, loss_val, Xd, Yd,
     return total_loss
 
 def l1_norm(X):
-	X = tf.sqrt(X**2)
+	# X = tf.sqrt(X**2)
+	X = tf.abs(X)
 	norm = tf.reduce_sum(X)
 	return norm 
 
