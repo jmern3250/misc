@@ -39,8 +39,10 @@ def main(args):
         output = decoder(latent_y, is_training, args.data)
 
     trans_loss = tf.nn.l2_loss(output-Y)
+    l1_loss = l1_norm(output-Y)
 
     mean_loss = tf.reduce_mean(trans_loss)
+    mean_l1_loss = tf.reduce_mean(l1_loss)
     tf.summary.scalar('loss', mean_loss)
 
     optimizer = tf.train.AdamOptimizer(learning_rate=args.rate)
@@ -49,6 +51,7 @@ def main(args):
     dec_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Decoder')
     with tf.control_dependencies(extra_update_ops):
         train_full = optimizer.minimize(mean_loss)
+        train_l1 = optimizer.minimize(mean_l1_loss)
     
     sess = tf.Session(config=config)
     enc_saver = tf.train.Saver(var_list=enc_vars)
@@ -65,6 +68,11 @@ def main(args):
     _ = run_model(sess, X, Y, is_training, mean_loss, X_train, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, 
               print_every=10, training=train_full, plot_losses=False,
+              writer=writer, sum_vars=merged)
+
+    _ = run_model(sess, X, Y, is_training, mean_loss, X_train, Y_train, 
+              epochs=args.epochs, batch_size=args.batch_size, 
+              print_every=10, training=train_l1, plot_losses=False,
               writer=writer, sum_vars=merged)
 
     model_name = './e2e_Model/e2e_'
@@ -175,12 +183,18 @@ def run_model(session, X, Y, is_training, loss_val, Xd, Yd,
             plt.show()
     return total_loss
 
+def l1_norm(X):
+	X = tf.sqrt(X**2)
+	norm = tf.reduce_sum(X)
+	return norm 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test CNN translation for given arguments')
     parser.add_argument('data', type=int) #0:NYU, 1:Airsim
     parser.add_argument('pt_epochs', type=int)
     parser.add_argument('epochs', type=int)
-    parser.add_argument('batch_size', type=int) #0:NYU, 1:Airsim
+    parser.add_argument('l1_epochs', type=int)
+    parser.add_argument('batch_size', type=int) 
     parser.add_argument('rate', type=float) 
     # parser.add_argument('lam', type=float) 
     parser.add_argument('GPU', type=int) 

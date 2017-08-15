@@ -5,7 +5,7 @@ import tensorflow as tf
 def instance_norm(X, name=None):
     if name is not None: 
         with tf.variable_scope(name):
-            mu, var = tf.nn.moments(X, axis=[1,2,3])
+            mu, var = tf.nn.moments(X, axes=[1,2,3])
             output = (X - mu)/tf.sqrt(var + 10e-6)
     else: 
         mu, var = tf.nn.moments(X, axis=[1,2,3])
