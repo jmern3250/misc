@@ -6,7 +6,9 @@ def instance_norm(X, name=None):
     if name is not None: 
         with tf.variable_scope(name):
             mu, var = tf.nn.moments(X, axes=[1,2,3])
-            output = (X - mu)/tf.sqrt(var + 10e-6)
+            MU = tf.reshape(mu, [-1,1,1,1])
+            VAR = tf.reshape(var, [-1,1,1,1])
+            output = (X - MU)/tf.sqrt(VAR + 10e-6)
     else: 
         mu, var = tf.nn.moments(X, axis=[1,2,3])
         output = (X - mu)/tf.sqrt(var + 10e-6)
