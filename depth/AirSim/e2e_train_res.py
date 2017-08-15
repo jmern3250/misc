@@ -5,7 +5,7 @@ import scipy.io as sio
 import glob 
 import argparse
 
-from model_1 import * 
+from model_2 import * 
 
 import numpy as np
 from numpy import matlib
