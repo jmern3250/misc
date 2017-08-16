@@ -5,7 +5,7 @@ import scipy.io as sio
 import glob 
 import argparse
 
-from model import * 
+from autoencoder import * 
 
 import numpy as np
 from numpy import matlib
@@ -14,7 +14,7 @@ import timeit
 
 def main(args):
     X_train, _ = load_data(args.data)
-    X_train_bw = np.sum(X_train, axis=3)/(3*255.0)
+    X_train_bw = (np.sum(X_train, axis=3)/(3*255.0)).reshape([-1,245,437,1])
     # Y_train_ = np.stack([Y_train.squeeze()]*3,axis=3)
 
     if args.GPU == 0:

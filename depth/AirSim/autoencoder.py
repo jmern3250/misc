@@ -159,13 +159,13 @@ def encoder(X, is_training, data):
     return c2
 
 def decoder(feats, is_training, data):
-    t0 = bn_conv2d_transpose(feats, is_training, 64, [3,3], 
+    t0 = bn_conv2d_transpose(feats, is_training, 64, [5,5], 
                             strides=2, padding='valid',
                             activation='relu', name='t0')
-    t1 = bn_conv2d_transpose(t0, is_training, 32, [3,3], 
+    t1 = bn_conv2d_transpose(t0, is_training, 32, [5,5], 
                             strides=2, padding='valid',
                             activation='relu', name='t1')
-    t2 = bn_conv2d_transpose(t1, is_training, 16, [3,3], 
+    t2 = bn_conv2d_transpose(t1, is_training, 16, [5,5], 
                             strides=2, padding='valid',
                             activation='relu', name='t2')
     c_out = tf.layers.conv2d(
