@@ -65,12 +65,12 @@ def main(args):
     sess = tf.Session(config=config)
     enc_saver = tf.train.Saver(var_list=enc_vars)
     dec_saver = tf.train.Saver(var_list=dec_vars)
-    loss_saver = tf.train.Saver(var_list=loss_vars)
+    # loss_saver = tf.train.Saver(var_list=loss_vars)
     merged = tf.summary.merge_all()
     writer = tf.summary.FileWriter('./tb',sess.graph)
 
     sess.run(tf.global_variables_initializer())
-    loss_saver.restore(sess, './loss_network/loss_network_enc')
+    # loss_saver.restore(sess, './loss_network/loss_network_enc')
     # _ = run_model(sess, X, Y, is_training, mean_loss, Y_train_, Y_train, 
     #           epochs=args.pt_epochs, batch_size=args.batch_size, 
     #           print_every=10, training=train_full, plot_losses=False,
