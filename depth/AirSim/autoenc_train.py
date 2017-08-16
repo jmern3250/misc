@@ -15,6 +15,7 @@ import timeit
 def main(args):
     X_train, _ = load_data(args.data)
     X_train_bw = (np.sum(X_train, axis=3)/(3)).reshape([-1,245,437,1])
+    # import pdb; pdb.set_trace()
     # Y_train_ = np.stack([Y_train.squeeze()]*3,axis=3)
 
     if args.GPU == 0:
