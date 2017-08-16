@@ -6,6 +6,7 @@ import glob
 import argparse
 
 from model import * 
+import autoencoder 
 
 import numpy as np
 from numpy import matlib
@@ -37,41 +38,42 @@ def main(args):
         latent_y = encoder(X, is_training, args.data)
     with tf.variable_scope('Decoder') as dec:
         output = decoder(latent_y, is_training, args.data)
+    with tf.variable_scope('loss_net') as ln: 
+        y_feats = autoencoder.encoder(output, is_training, args.data)
+    with tf.variable_scope(ln, reuse=True):
+        x_feats = autoencoder.encoder(X, is_training, args.data)
 
     trans_loss = tf.nn.l2_loss(output-Y)
-    l1_loss = l1_norm(output-Y)
+    feat_loss = tf.nn.l2_loss(y_feats - x_feats)
 
-    mean_loss = tf.reduce_mean(trans_loss)
-    mean_l1_loss = tf.reduce_mean(l1_loss)
+    mean_loss = tf.reduce_mean(trans_loss + args.lam*feat_loss)
     tf.summary.scalar('loss', mean_loss)
 
     optimizer = tf.train.AdamOptimizer(learning_rate=args.rate)
     extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     enc_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Encoder')
     dec_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Decoder')
+    loss_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Loss_enc')
     with tf.control_dependencies(extra_update_ops):
-        train_full = optimizer.minimize(mean_loss)
-        train_l1 = optimizer.minimize(mean_l1_loss)
+        train_full = optimizer.minimize(mean_loss,var_list=[enc_vars, dec_vars])
     
     sess = tf.Session(config=config)
     enc_saver = tf.train.Saver(var_list=enc_vars)
     dec_saver = tf.train.Saver(var_list=dec_vars)
+    loss_saver = tf.train.Saver(var_list=loss_vars)
     merged = tf.summary.merge_all()
     writer = tf.summary.FileWriter('./tb',sess.graph)
 
     sess.run(tf.global_variables_initializer())
-    _ = run_model(sess, X, Y, is_training, mean_loss, Y_train_, Y_train, 
-              epochs=args.pt_epochs, batch_size=args.batch_size, 
-              print_every=10, training=train_full, plot_losses=False,
-              writer=writer, sum_vars=merged)
+    loss_saver.restore(sess, './loss_network/loss_network_enc')
+    # _ = run_model(sess, X, Y, is_training, mean_loss, Y_train_, Y_train, 
+    #           epochs=args.pt_epochs, batch_size=args.batch_size, 
+    #           print_every=10, training=train_full, plot_losses=False,
+    #           writer=writer, sum_vars=merged)
 
     _ = run_model(sess, X, Y, is_training, mean_loss, X_train, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, 
               print_every=10, training=train_full, plot_losses=False,
-              writer=writer, sum_vars=merged)
-    _ = run_model(sess, X, Y, is_training, mean_loss, X_train, Y_train, 
-              epochs=args.l1_epochs, batch_size=args.batch_size, 
-              print_every=10, training=train_l1, plot_losses=False,
               writer=writer, sum_vars=merged)
 
     model_name = './e2e_Model/e2e_'
@@ -191,12 +193,10 @@ def l1_norm(X):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test CNN translation for given arguments')
     parser.add_argument('data', type=int) #0:NYU, 1:Airsim
-    parser.add_argument('pt_epochs', type=int)
     parser.add_argument('epochs', type=int)
-    parser.add_argument('l1_epochs', type=int)
     parser.add_argument('batch_size', type=int) 
     parser.add_argument('rate', type=float) 
-    # parser.add_argument('lam', type=float) 
+    parser.add_argument('lam', type=float) 
     parser.add_argument('GPU', type=int) 
     args = parser.parse_args()
     main(args)
