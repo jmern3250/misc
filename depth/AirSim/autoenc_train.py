@@ -13,8 +13,8 @@ import math
 import timeit
 
 def main(args):
-    X_train, _ = load_data(args.data)
-    X_train_bw = (np.sum(X_train, axis=3)/(3)).reshape([-1,245,437,1])
+    X_train, Y_train = load_data(args.data)
+    # X_train_bw = (np.sum(X_train, axis=3)/(3)).reshape([-1,245,437,1])
     # import pdb; pdb.set_trace()
     # Y_train_ = np.stack([Y_train.squeeze()]*3,axis=3)
 
@@ -58,7 +58,7 @@ def main(args):
     writer = tf.summary.FileWriter('./tb',sess.graph)
 
     sess.run(tf.global_variables_initializer())
-    _ = run_model(sess, X, Y, is_training, mean_loss, X_train_bw, X_train_bw, 
+    _ = run_model(sess, X, Y, is_training, mean_loss, Y_train, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, 
               print_every=10, training=train_full, plot_losses=False,
               writer=writer, sum_vars=merged)
