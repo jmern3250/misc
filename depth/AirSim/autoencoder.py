@@ -171,22 +171,22 @@ def decoder(feats, is_training, data):
                             strides=2, padding='valid',
                             activation='relu', name='t2')
     t3 = bn_conv2d_transpose(t2, is_training, 16, [3,3], 
-                            strides=2, padding='valid',
+                            strides=4, padding='valid',
                             activation='relu', name='t3')
     c_out_ = tf.layers.conv2d(
                             inputs=t3, 
                             filters=1,
                             kernel_size=[9,9],
-                            strides=1,
+                            strides=2,
                             padding='valid',
                             activation=tf.nn.relu,
                             name='cout_')
     c_out = tf.layers.conv2d(
                             inputs=c_out_,
                             filters=1,
-                            kernel_size=[3,3],
+                            kernel_size=[4,4],
                             strides=1,
-                            padding='same',
+                            padding='valid',
                             activation=tf.tanh,
                             name='cout')
     output_ = c_out + 1.0
