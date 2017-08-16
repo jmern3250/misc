@@ -14,7 +14,7 @@ import timeit
 
 def main(args):
     X_train, _ = load_data(args.data)
-    X_train_bw = (np.sum(X_train, axis=3)/(3*255.0)).reshape([-1,245,437,1])
+    X_train_bw = (np.sum(X_train, axis=3)/(3)).reshape([-1,245,437,1])
     # Y_train_ = np.stack([Y_train.squeeze()]*3,axis=3)
 
     if args.GPU == 0:
@@ -34,9 +34,9 @@ def main(args):
         Y = tf.placeholder(tf.float32, [None, 245, 437, 1])
     is_training = tf.placeholder(tf.bool)
     
-    with tf.variable_scope('Encoder') as enc: 
+    with tf.variable_scope('Loss_Encoder') as enc: 
         latent_y = encoder(X, is_training, args.data)
-    with tf.variable_scope('Decoder') as dec:
+    with tf.variable_scope('Loss_Decoder') as dec:
         output = decoder(latent_y, is_training, args.data)
 
     trans_loss = tf.nn.l2_loss(output-Y)
@@ -45,8 +45,8 @@ def main(args):
 
     optimizer = tf.train.AdamOptimizer(learning_rate=args.rate)
     extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-    enc_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Encoder')
-    dec_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Decoder')
+    enc_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Loss_Encoder')
+    dec_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Loss_Decoder')
     with tf.control_dependencies(extra_update_ops):
         train_full = optimizer.minimize(mean_loss)
     
