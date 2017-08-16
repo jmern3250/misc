@@ -16,7 +16,7 @@ import timeit
 def main(args):
     X_train, Y_train = load_data(args.data)
     Y_train_ = np.stack([Y_train.squeeze()]*3,axis=3)
-    X_train_bw = (np.sum(X_train, axis=3)/(3)).reshape([-1,245,437,1])
+    # X_train_bw = (np.sum(X_train, axis=3)/(3)).reshape([-1,245,437,1])
 
     if args.GPU == 0:
         config = tf.ConfigProto(
@@ -43,7 +43,7 @@ def main(args):
     with tf.variable_scope('Loss_Encoder') as ln: 
         y_feats = autoencoder.encoder(output, is_training, args.data)
     with tf.variable_scope(ln, reuse=True):
-        x_feats = autoencoder.encoder(X_, is_training, args.data)
+        x_feats = autoencoder.encoder(Y, is_training, args.data)
 
     trans_loss = tf.nn.l2_loss(output-Y)
     feat_loss = tf.nn.l2_loss(y_feats - x_feats)
