@@ -40,7 +40,9 @@ def main(args):
     with tf.variable_scope('Loss_Decoder') as dec:
         output = decoder(latent_y, is_training, args.data)
 
-    trans_loss = tf.nn.l2_loss(output-Y)
+    l2_loss = tf.nn.l2_loss(output-Y)
+    l1_loss = l1_norm(output-Y)
+    trans_loss = 0.9*l2_loss + 0.1*l1_loss
     mean_loss = tf.reduce_mean(trans_loss)
     tf.summary.scalar('loss', mean_loss)
 
