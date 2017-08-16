@@ -46,7 +46,10 @@ def main(args):
         x_feats = autoencoder.encoder(Y, is_training, args.data)
 
     trans_loss = tf.nn.l2_loss(output-Y)
-    feat_loss = tf.nn.l2_loss(y_feats - x_feats)
+    feat_loss = tf.nn.l2_loss(y_feats[0] - x_feats[0])
+    feat_loss += tf.nn.l2_loss(y_feats[1] - x_feats[1])
+    feat_loss += tf.nn.l2_loss(y_feats[2] - x_feats[2])
+    feat_loss += tf.nn.l2_loss(y_feats[3] - x_feats[3])
 
     mean_loss = tf.reduce_mean(trans_loss + args.lam*feat_loss)
     tf.summary.scalar('loss', mean_loss)
