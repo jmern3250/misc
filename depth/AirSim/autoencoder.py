@@ -2,17 +2,6 @@ import numpy as np
 from numpy import matlib
 import tensorflow as tf
 
-def instance_norm(X, name=None):
-    if name is not None: 
-        with tf.variable_scope(name):
-            mu, var = tf.nn.moments(X, axes=[1,2,3])
-            MU = tf.reshape(mu, [-1,1,1,1])
-            VAR = tf.reshape(var, [-1,1,1,1])
-            output = (X - MU)/tf.sqrt(VAR + 10e-6)
-    else: 
-        mu, var = tf.nn.moments(X, axis=[1,2,3])
-        output = (X - mu)/tf.sqrt(var + 10e-6)
-    return output 
 
 def bn_conv2d(X, is_training, filters, kernel_size, strides=1, padding='valid',activation='relu', name=None):
     if name is not None: 
@@ -25,7 +14,10 @@ def bn_conv2d(X, is_training, filters, kernel_size, strides=1, padding='valid',a
                                 padding=padding,
                                 activation=None,
                                 name='c1')
-            bn1 = instance_norm(c1, name='bn1')
+            bn1 = tf.layers.batch_normalization(
+                            c1, training=is_training,
+                            renorm=True,  
+                            name='bn1')
             if activation == 'relu':
                 h1 = tf.nn.relu(bn1, name='h1')
             elif activation =='tanh':
@@ -41,7 +33,10 @@ def bn_conv2d(X, is_training, filters, kernel_size, strides=1, padding='valid',a
                             padding=padding,
                             activation=None,
                             name='c1')
-        bn1 = instance_norm(c1, name='bn1')
+        bn1 = tf.layers.batch_normalization(
+                            c1, training=is_training,
+                            renorm=True,  
+                            name='bn1')
         if activation == 'relu':
             h1 = tf.nn.relu(bn1, name='h1')
         elif activation =='tanh':
@@ -61,7 +56,10 @@ def bn_conv2d_transpose(X, is_training, filters, kernel_size, strides=1, padding
                                 padding=padding,
                                 activation=None,
                                 name='c1')
-            bn1 = instance_norm(c1, name='bn1')
+            bn1 = tf.layers.batch_normalization(
+                            c1, training=is_training,
+                            renorm=True,  
+                            name='bn1')
             if activation == 'relu':
                 h1 = tf.nn.relu(bn1, name='h1')
             elif activation =='tanh':
@@ -77,7 +75,10 @@ def bn_conv2d_transpose(X, is_training, filters, kernel_size, strides=1, padding
                             padding=padding,
                             activation=None,
                             name='c1')
-        bn1 = instance_norm(c1, name='bn1')
+        bn1 = tf.layers.batch_normalization(
+                            c1, training=is_training,
+                            renorm=True,  
+                            name='bn1')
         if activation == 'relu':
             h1 = tf.nn.relu(bn1, name='h1')
         elif activation =='tanh':
@@ -97,7 +98,10 @@ def res_conv2d(X, is_training, filters, kernel_size, strides=1, name=None):
                                 padding='same',
                                 activation=None,
                                 name='c1')
-            bn1 = instance_norm(c1, name='bn1')
+            bn1 = tf.layers.batch_normalization(
+                            c1, training=is_training,
+                            renorm=True,  
+                            name='bn1')
             h1 = tf.nn.relu(bn1, name='h1')
             c2 = tf.layers.conv2d(
                                 inputs=h1, 
@@ -107,7 +111,10 @@ def res_conv2d(X, is_training, filters, kernel_size, strides=1, name=None):
                                 padding='same',
                                 activation=None,
                                 name='c2')
-            bn2 = instance_norm(c2, name='bn2')
+            bn2 = tf.layers.batch_normalization(
+                            c2, training=is_training,
+                            renorm=True,  
+                            name='bn2')
             added = bn2 + X
             # h2 = tf.nn.relu(added, name='h2')
     else: 
@@ -129,61 +136,40 @@ def res_conv2d(X, is_training, filters, kernel_size, strides=1, name=None):
                             padding='same',
                             activation=None,
                             name='c2')
-        bn2 = instance_norm(c2, name='bn2')
+        bn2 = tf.layers.batch_normalization(
+                            c2, training=is_training,
+                            renorm=True,  
+                            name='bn2')
         added = bn2 + X
         # h2 = tf.nn.relu(added, name='h2')
     return added
 
 
 def encoder(X, is_training, data):
-    c0 = bn_conv2d(X, is_training, 32, [9,9], 
+    c0 = bn_conv2d(X, is_training, 16, [9,9], 
                     strides=2, padding='valid',
                     activation='relu', name='c0')
-    c1 = bn_conv2d(c0, is_training, 64, [3,3], 
+    c1 = bn_conv2d(c0, is_training, 32, [3,3], 
                     strides=2, padding='valid',
                     activation='relu', name='c1')
-    c2 = bn_conv2d(c1, is_training, 128, [3,3], 
+    c2 = bn_conv2d(c1, is_training, 64, [3,3], 
                     strides=2, padding='valid',
                     activation='relu', name='c2')
-    r0 = res_conv2d(c2, is_training, 128, [3,3], strides=1, name='r0')
-    r1 = res_conv2d(r0, is_training, 128, [3,3], strides=1, name='r1')
-    r2 = res_conv2d(r1, is_training, 128, [3,3], strides=1, name='r2')
-    r3 = res_conv2d(r2, is_training, 128, [3,3], strides=1, name='r3')
-    r4 = res_conv2d(r3, is_training, 128, [3,3], strides=1, name='r4')
     
-    return [c0, c1, c2, r4]
+    return c2
 
 def decoder(feats, is_training, data):
-    c0, c1, c2, r4 = feats
-
-    t0 = bn_conv2d_transpose(r4, is_training, 64, [5,5], 
+    t0 = bn_conv2d_transpose(feats, is_training, 64, [3,3], 
                             strides=2, padding='valid',
                             activation='relu', name='t0')
-    t1 = bn_conv2d_transpose(t0, is_training, 32, [5,5], 
+    t1 = bn_conv2d_transpose(t0, is_training, 32, [3,3], 
                             strides=2, padding='valid',
                             activation='relu', name='t1')
-    t2 = bn_conv2d_transpose(t1, is_training, 16, [5,5], 
+    t2 = bn_conv2d_transpose(t1, is_training, 16, [3,3], 
                             strides=2, padding='valid',
                             activation='relu', name='t2')
-
-    # c0_ = bn_conv2d_transpose(c0, is_training, 16, [18,18], 
-    #                         strides=4, padding='valid',
-    #                         activation='relu', name='c0_')
-    c1_ = bn_conv2d_transpose(c1, is_training, 16, [21,21], 
-                            strides=4, padding='valid',
-                            activation='relu', name='c1_')
-    c2_ = bn_conv2d_transpose(c2, is_training, 16, [29,29], 
-                            strides=8, padding='valid',
-                            activation='relu', name='c2_')
-
-    # print(t2.shape)
-    # print(c1_.shape)
-    # print(c2_.shape)
-
-    c_sum = t2 + c1_ + c2_
-
     c_out = tf.layers.conv2d(
-                            inputs=c_sum, 
+                            inputs=t2, 
                             filters=1,
                             kernel_size=[9,9],
                             strides=1,

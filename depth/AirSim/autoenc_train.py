@@ -13,9 +13,10 @@ import math
 import timeit
 
 def main(args):
-    X_train, Y_train = load_data(args.data)
-    Y_train_ = np.stack([Y_train.squeeze()]*3,axis=3)
-    # dev = tf.device('/cpu:0')
+    X_train, _ = load_data(args.data)
+    X_train_bw = np.sum(X_train, axis=3)/(3*255.0)
+    # Y_train_ = np.stack([Y_train.squeeze()]*3,axis=3)
+
     if args.GPU == 0:
         config = tf.ConfigProto(
                 device_count = {'GPU': 0}
@@ -26,11 +27,10 @@ def main(args):
 
     tf.reset_default_graph()
     if args.data == 0:
-        X = tf.placeholder(tf.float32, [None, 480, 640, 3])
+        X = tf.placeholder(tf.float32, [None, 480, 640, 1])
         Y = tf.placeholder(tf.float32, [None, 480, 640, 1])
     elif args.data == 1:
-        X = tf.placeholder(tf.float32, [None, 245, 437, 3])
-        # Y_ = tf.placeholder(tf.float32, [None, 245, 437, 3])
+        X = tf.placeholder(tf.float32, [None, 245, 437, 1])
         Y = tf.placeholder(tf.float32, [None, 245, 437, 1])
     is_training = tf.placeholder(tf.bool)
     
@@ -38,9 +38,8 @@ def main(args):
         latent_y = encoder(X, is_training, args.data)
     with tf.variable_scope('Decoder') as dec:
         output = decoder(latent_y, is_training, args.data)
-    
-    trans_loss = tf.nn.l2_loss(output-Y)
 
+    trans_loss = tf.nn.l2_loss(output-Y)
     mean_loss = tf.reduce_mean(trans_loss)
     tf.summary.scalar('loss', mean_loss)
 
@@ -50,7 +49,6 @@ def main(args):
     dec_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Decoder')
     with tf.control_dependencies(extra_update_ops):
         train_full = optimizer.minimize(mean_loss)
-        train_enc = optimizer.minimize(mean_loss, var_list=enc_vars)
     
     sess = tf.Session(config=config)
     enc_saver = tf.train.Saver(var_list=enc_vars)
@@ -59,18 +57,12 @@ def main(args):
     writer = tf.summary.FileWriter('./tb',sess.graph)
 
     sess.run(tf.global_variables_initializer())
-    enc_saver.restore(sess, './PT_Model/PT_data_1_epochs_10_batchsize_10_rate_0.001_lambda_0.001_enc')
-    dec_saver.restore(sess, './PT_Model/PT_data_1_epochs_10_batchsize_10_rate_0.001_lambda_0.001_dec')
-    _ = run_model(sess, X, Y, is_training, mean_loss, X_train, Y_train, 
+    _ = run_model(sess, X, Y, is_training, mean_loss, X_train_bw, X_train_bw, 
               epochs=args.epochs, batch_size=args.batch_size, 
-              print_every=10, training=train_enc, plot_losses=False,
+              print_every=10, training=train_full, plot_losses=False,
               writer=writer, sum_vars=merged)
-    model_name = './E_Model/E_'
-    model_name += 'data_' + str(args.data)
-    model_name += '_epochs_' + str(args.epochs)
-    model_name += '_batchsize_' + str(args.batch_size)
-    model_name += '_rate_' + str(args.rate)
 
+    model_name = './loss_network/loss_network'
     enc_saver.save(sess, model_name+'_enc')
     dec_saver.save(sess, model_name+'_dec')
 
@@ -174,11 +166,17 @@ def run_model(session, X, Y, is_training, loss_val, Xd, Yd,
             plt.show()
     return total_loss
 
+def l1_norm(X):
+	# X = tf.sqrt(X**2)
+	X = tf.abs(X)
+	norm = tf.reduce_sum(X)
+	return norm 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test CNN translation for given arguments')
     parser.add_argument('data', type=int) #0:NYU, 1:Airsim
-    parser.add_argument('epochs', type=int) #0:NYU, 1:Airsim
-    parser.add_argument('batch_size', type=int) #0:NYU, 1:Airsim
+    parser.add_argument('epochs', type=int)
+    parser.add_argument('batch_size', type=int) 
     parser.add_argument('rate', type=float) 
     # parser.add_argument('lam', type=float) 
     parser.add_argument('GPU', type=int) 
