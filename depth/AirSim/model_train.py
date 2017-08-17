@@ -74,10 +74,10 @@ def main(args):
     loss_saver.restore(sess, './loss_network/loss_network_enc')
     # enc_saver.restore(sess, './loss_network/loss_network_enc')
     # dec_saver.restore(sess, './loss_network/loss_network_dec')
-    # _ = run_model(sess, X, Y, is_training, mean_loss, Y_train_, Y_train, 
-    #           epochs=args.pt_epochs, batch_size=args.batch_size, 
-    #           print_every=10, training=train_full, plot_losses=False,
-    #           writer=writer, sum_vars=merged)
+    _ = run_model(sess, X, Y, is_training, mean_loss, Y_train_, Y_train, 
+              epochs=10, batch_size=args.batch_size, 
+              print_every=10, training=train_full, plot_losses=False,
+              writer=writer, sum_vars=merged)
 
     _ = run_model(sess, X, X_, Y, is_training, mean_loss, X_train, Y_train, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, 
