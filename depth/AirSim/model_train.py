@@ -72,8 +72,8 @@ def main(args):
 
     sess.run(tf.global_variables_initializer())
     loss_saver.restore(sess, './loss_network/loss_network_enc')
-    enc_saver.restore(sess, './loss_network/loss_network_enc')
-    dec_saver.restore(sess, './loss_network/loss_network_dec')
+    # enc_saver.restore(sess, './loss_network/loss_network_enc')
+    # dec_saver.restore(sess, './loss_network/loss_network_dec')
     # _ = run_model(sess, X, Y, is_training, mean_loss, Y_train_, Y_train, 
     #           epochs=args.pt_epochs, batch_size=args.batch_size, 
     #           print_every=10, training=train_full, plot_losses=False,
