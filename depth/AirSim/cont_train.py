@@ -219,9 +219,9 @@ def gram_loss(X,Y):
     W = W_.value
     C = C_.value 
     psi_X = tf.reshape(X, [-1, H*W, C])
-    gram_X = tf.transpose(psi_X,[0,2,1])*psi_X/(C*H*W)
+    gram_X = tf.matmul(tf.transpose(psi_X,[0,2,1]),psi_X)/(C*H*W)
     psi_Y = tf.reshape(Y, [-1, H*W, C])
-    gram_Y = tf.transpose(psi_Y,[0,2,1])*psi_Y/(C*H*W)
+    gram_Y = tf.matmul(tf.transpose(psi_Y,[0,2,1]),psi_Y)/(C*H*W)
     loss = tf.norm(gram_X-gram_Y)**2
     return loss 
 
