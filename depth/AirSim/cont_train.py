@@ -58,7 +58,7 @@ def main(args):
     # feat_loss += tf.nn.l2_loss(y_feats[3] - x_feats[3])
 
     # mean_loss = tf.reduce_mean(trans_loss + args.lam*feat_loss)
-    mean_loss = tf.reduce_mean(trans_loss)
+    mean_loss = tf.reduce_mean(trans_loss + reg_loss + feat_loss)
     tf.summary.scalar('loss', mean_loss)
 
     optimizer = tf.train.AdamOptimizer(learning_rate=args.rate)
