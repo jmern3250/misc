@@ -46,6 +46,12 @@ def main(args):
         x_feats = autoencoder.encoder(Y, is_training, args.data)
 
     trans_loss = l1_norm(output-Y)
+    reg_loss = TV_loss(output)
+    feat_loss = gram_loss(y_feats[0], x_feats[0])
+    feat_loss += gram_loss(y_feats[1], x_feats[1])
+    feat_loss += gram_loss(y_feats[2], x_feats[2])
+    feat_loss += gram_loss(y_feats[3], x_feats[3])
+
     # feat_loss = tf.nn.l2_loss(y_feats[0] - x_feats[0])
     # feat_loss += tf.nn.l2_loss(y_feats[1] - x_feats[1])
     # feat_loss += tf.nn.l2_loss(y_feats[2] - x_feats[2])
@@ -195,6 +201,26 @@ def l1_norm(X):
 	X = tf.abs(X)
 	norm = tf.reduce_sum(X)
 	return norm 
+
+def TV_loss(X):
+    w = np.ones([3,3,1,1])*-1
+    w[1,1,0,0] = 8
+    w /= 100.0
+    # w = np.array([[0,-1,0],[-1,4,-1],[0,-1,0]])/50.0
+    # w = w.reshape([3,3,1,1])
+    W = tf.constant(w, dtype=tf.float32)
+    edges = tf.nn.conv2d(X, W, strides=[1,1,1,1], padding='SAME')
+    loss = tf.reduce_sum(tf.abs(edges))
+    return loss 
+
+def gram_loss(X,Y):
+    N, H, W, C = X.shape 
+    psi_X = tf.reshape(X, [N, H*W, C])
+    gram_X = psi_X.T*psi_X/(C*H*W)
+    psi_Y = tf.reshape(Y, [N, H*W, C])
+    gram_Y = psi_Y.T*psi_Y/(C*H*W)
+    loss = tf.norm(gram_X-gram_Y)**2
+    return loss 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test CNN translation for given arguments')
