@@ -214,11 +214,12 @@ def TV_loss(X):
     return loss 
 
 def gram_loss(X,Y):
-    N_, H_, W_, C_ = X.shape
-    N = N_.value
+    _, H_, W_, C_ = X.shape
+    # N = N_.value
     H = H_.value
     W = W_.value
     C = C_.value 
+    # test = X.get_shape()
     import pdb; pdb.set_trace()
     psi_X = tf.reshape(X, shape=[-1, H*W, C])
     gram_X = psi_X.T*psi_X/(C*H*W)
