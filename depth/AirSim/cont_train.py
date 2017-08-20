@@ -219,7 +219,7 @@ def gram_loss(X,Y):
     H = H_.value
     W = W_.value
     C = C_.value 
-    # import pdb; pdb.set_trace()
+    import pdb; pdb.set_trace()
     psi_X = tf.reshape(X, [N, H*W, C])
     gram_X = psi_X.T*psi_X/(C*H*W)
     psi_Y = tf.reshape(Y, [N, H*W, C])
