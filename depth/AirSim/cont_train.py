@@ -205,7 +205,7 @@ def l1_norm(X):
 def TV_loss(X):
     w = np.ones([3,3,1,1])*-1
     w[1,1,0,0] = 8
-    w /= 100.0
+    # w /= 100.0
     # w = np.array([[0,-1,0],[-1,4,-1],[0,-1,0]])/50.0
     # w = w.reshape([3,3,1,1])
     W = tf.constant(w, dtype=tf.float32)
