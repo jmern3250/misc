@@ -73,8 +73,8 @@ def main(args):
 
     sess.run(tf.global_variables_initializer())
     loss_saver.restore(sess, './loss_network/loss_network_enc')
-    enc_saver.restore(sess, './e2e_Model/e2e_data_1_epochs_20_batchsize_10_rate_0.0001_enc')
-    dec_saver.restore(sess, './e2e_Model/e2e_data_1_epochs_20_batchsize_10_rate_0.0001_dec')
+    enc_saver.restore(sess, './final_Model/f_data_1_epochs_100_batchsize_5_rate_1e-05_enc')
+    dec_saver.restore(sess, './final_Model/f_data_1_epochs_100_batchsize_5_rate_1e-05_dec')
 
     _ = run_model(sess, X, X_, Y, is_training, mean_loss, X_train, Y_train, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, 
