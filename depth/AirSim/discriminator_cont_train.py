@@ -6,6 +6,7 @@ import glob
 import argparse
 
 from model import * 
+from discriminator import discriminator
 import autoencoder 
 
 import numpy as np
@@ -15,7 +16,8 @@ import timeit
 
 def main(args):
     X_train, Y_train = load_data(args.data)
-    Y_train_ = np.stack([Y_train.squeeze()]*3,axis=3)
+    # Y_train_ = np.stack([Y_train.squeeze()]*3,axis=3)
+    # X_train_bw = (np.sum(X_train, axis=3)/(3)).reshape([-1,245,437,1])
 
     if args.GPU == 0:
         config = tf.ConfigProto(
@@ -31,7 +33,6 @@ def main(args):
         Y = tf.placeholder(tf.float32, [None, 480, 640, 1])
     elif args.data == 1:
         X = tf.placeholder(tf.float32, [None, 245, 437, 3])
-        X_ = tf.placeholder(tf.float32, [None, 245, 437, 1])
         Y = tf.placeholder(tf.float32, [None, 245, 437, 1])
     is_training = tf.placeholder(tf.bool)
     
@@ -39,53 +40,50 @@ def main(args):
         latent_y = encoder(X, is_training, args.data)
     with tf.variable_scope('Decoder') as dec:
         output = decoder(latent_y, is_training, args.data)
-    with tf.variable_scope('Loss_Encoder') as ln: 
-        y_feats = autoencoder.encoder(output, is_training, args.data)
-    with tf.variable_scope(ln, reuse=True):
-        x_feats = autoencoder.encoder(Y, is_training, args.data)
+    with tf.variable_scope('Discriminator') as dis: 
+        D_x = discriminator(X, output, is_training, args.data) #from generated result
+    with tf.variable_scope(dis, reuse=True): 
+        D_y = discriminator(X, Y, is_training, args.data)
+
+    disc_val = tf.reduce_mean(tf.log(D_y)) + tf.reduce_mean(tf.log(1-D_x))
 
     trans_loss = l1_norm(output-Y)
     reg_loss = TV_loss(output)
-    feat_loss = gram_loss(y_feats[0], x_feats[0])
-    feat_loss += gram_loss(y_feats[1], x_feats[1])
-    feat_loss += gram_loss(y_feats[2], x_feats[2])
-    feat_loss += gram_loss(y_feats[3], x_feats[3])
 
-    mean_loss = tf.reduce_mean(trans_loss + 0.1*reg_loss + 100.0*feat_loss)
+    mean_loss = tf.reduce_mean(trans_loss + 0.1*reg_loss + 10.0*disc_val)
     tf.summary.scalar('loss', mean_loss)
 
     optimizer = tf.train.AdamOptimizer(learning_rate=args.rate)
     extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     enc_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Encoder')
     dec_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Decoder')
-    loss_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Loss_Encoder')
+    disc_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Discriminator')
     with tf.control_dependencies(extra_update_ops):
-        train_full = optimizer.minimize(mean_loss,var_list=[enc_vars, dec_vars])
+        train_discriminator = optimizer.maximize(disc_val, var_list=[disc_vars])
+        train_generator = optimizer.minimize(mean_loss,var_list=[enc_vars, dec_vars])
     
     sess = tf.Session(config=config)
     enc_saver = tf.train.Saver(var_list=enc_vars)
     dec_saver = tf.train.Saver(var_list=dec_vars)
+    disc_saver = tf.train.Saver(var_list=disc_vars)
 
-    loss_saver = tf.train.Saver(var_list=loss_vars)
     merged = tf.summary.merge_all()
     writer = tf.summary.FileWriter('./tb',sess.graph)
 
     sess.run(tf.global_variables_initializer())
-    loss_saver.restore(sess, './loss_network/loss_network_enc')
+    enc_saver.restore(sess, './disc_model/initial_model_enc')
+    dec_saver.restore(sess, './disc_model/initial_model_dec')
+    dec_saver.restore(sess, './disc_model/initial_model_disc')
 
-    _ = run_model(sess, X, X_, Y, is_training, mean_loss, Y_train_, Y_train, Y_train, 
-              epochs=10, batch_size=args.batch_size, 
-              print_every=10, training=train_full, plot_losses=False,
-              writer=writer, sum_vars=merged)
+    _ = run_model(sess, X, Y, is_training, disc_val, mean_loss, X_train, Y_train, 
+              epochs=args.epochs, batch_size=args.batch_size, print_every=10,
+              disc_training=train_discriminator, gen_training=train_generator, 
+              plot_losses=False, writer=writer, sum_vars=merged):
 
-    _ = run_model(sess, X, X_, Y, is_training, mean_loss, X_train, Y_train, Y_train, 
-              epochs=args.epochs, batch_size=args.batch_size, 
-              print_every=10, training=train_full, plot_losses=False,
-              writer=writer, sum_vars=merged)
-
-    model_name = './trained_model/initial_model'
+    model_name = './disc_model/final_model'
     enc_saver.save(sess, model_name+'_enc')
     dec_saver.save(sess, model_name+'_dec')
+    disc_saver.save(sess, model_name+'_disc')
 
 def load_data(data_idx, num=None):
     if data_idx == 0:
@@ -110,6 +108,7 @@ def load_data(data_idx, num=None):
             im=Image.open(filename)
             X_train[i,:,:,:] = np.array(im)[:,:,:]/255.0
             i += 1
+            # import pdb; pdb.set_trace()
             if i == TRAIN: 
                 break
 
@@ -126,9 +125,10 @@ def load_data(data_idx, num=None):
 
     return X_train, Y_train
 
-def run_model(session, X, X_, Y, is_training, loss_val, Xd, Xd_, Yd, 
+def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd, 
               epochs=1, batch_size=64, print_every=100,
-              training=None, plot_losses=False,writer=None, sum_vars=None):
+              disc_training=None, gen_training=None, 
+              plot_losses=False, writer=None, sum_vars=None):
     
     # shuffle indicies
     train_indicies = np.arange(Xd.shape[0])
@@ -136,9 +136,11 @@ def run_model(session, X, X_, Y, is_training, loss_val, Xd, Xd_, Yd,
     
     # setting up variables we want to compute (and optimizing)
     # if we have a training function, add that to things we compute
-    variables = [loss_val, training]
+    gen_variables = [loss_val, gen_training]
+    disc_variables = [disc_val, disc_training]
     if writer is not None: 
-        variables.append(sum_vars)
+        gen_variables.append(sum_vars)
+        disc_variables.append(sum_vars)
 
     # counter 
     iter_cnt = 0
@@ -153,7 +155,6 @@ def run_model(session, X, X_, Y, is_training, loss_val, Xd, Xd_, Yd,
             
             # create a feed dictionary for this batch
             feed_dict = {X: Xd[idx,:],
-                         X_: Xd_[idx,:],
                          Y: Yd[idx,:],
                          is_training: True}
             # get batch size
@@ -162,10 +163,12 @@ def run_model(session, X, X_, Y, is_training, loss_val, Xd, Xd_, Yd,
             # have tensorflow compute loss and correct predictions
             # and (if given) perform a training step
             if writer is not None:
-                loss, _, summary = session.run(variables,feed_dict=feed_dict)
+                _, _, _ = session.run(disc_variables, feed_dict=feed_dict)
+                loss, _, summary = session.run(gen_variables,feed_dict=feed_dict)
                 writer.add_summary(summary, iter_cnt)
             else:
-                loss, _ = session.run(variables,feed_dict=feed_dict)
+                _, _ = session.run(disc_variables, feed_dict=feed_dict)
+                loss, _ = session.run(gen_variables,feed_dict=feed_dict)
             # aggregate performance stats
             losses.append(loss*actual_batch_size)
             
@@ -186,6 +189,7 @@ def run_model(session, X, X_, Y, is_training, loss_val, Xd, Xd_, Yd,
     return total_loss
 
 def l1_norm(X):
+	# X = tf.sqrt(X**2)
 	X = tf.abs(X)
 	norm = tf.reduce_sum(X)
 	return norm 
@@ -210,12 +214,29 @@ def gram_loss(X,Y):
     loss = tf.norm(gram_X-gram_Y)**2
     return loss 
 
+def disc_error(X, real):
+    ''' X: Output map from discriminator
+        real: Whether or not the pair was true or not
+        '''
+    _, H_, W_, C_ = X.shape
+    H = H_.value
+    W = W_.value
+    C = C_.value
+    if real: 
+        error_map = X - 1.0
+    else:
+        error_map = X 
+    loss = tf.nn.l2_loss(error_map)
+    return loss
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test CNN translation for given arguments')
     parser.add_argument('data', type=int) #0:NYU, 1:Airsim
     parser.add_argument('epochs', type=int)
     parser.add_argument('batch_size', type=int) 
     parser.add_argument('rate', type=float) 
+    # parser.add_argument('lam', type=float) 
     parser.add_argument('GPU', type=int) 
     args = parser.parse_args()
     main(args)
