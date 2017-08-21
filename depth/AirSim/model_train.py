@@ -45,13 +45,14 @@ def main(args):
     with tf.variable_scope(ln, reuse=True):
         x_feats = autoencoder.encoder(Y, is_training, args.data)
 
-    trans_loss = tf.nn.l2_loss(output-Y)
-    feat_loss = tf.nn.l2_loss(y_feats[0] - x_feats[0])
-    feat_loss += tf.nn.l2_loss(y_feats[1] - x_feats[1])
-    feat_loss += tf.nn.l2_loss(y_feats[2] - x_feats[2])
-    feat_loss += tf.nn.l2_loss(y_feats[3] - x_feats[3])
+    trans_loss = l1_norm(output-Y)
+    reg_loss = TV_loss(output)
+    feat_loss = gram_loss(y_feats[0], x_feats[0])
+    feat_loss += gram_loss(y_feats[1], x_feats[1])
+    feat_loss += gram_loss(y_feats[2], x_feats[2])
+    feat_loss += gram_loss(y_feats[3], x_feats[3])
 
-    mean_loss = tf.reduce_mean(trans_loss + args.lam*feat_loss)
+    mean_loss = tf.reduce_mean(trans_loss + 0.1*reg_loss + 100.0*feat_loss)
     tf.summary.scalar('loss', mean_loss)
 
     optimizer = tf.train.AdamOptimizer(learning_rate=args.rate)
@@ -84,11 +85,12 @@ def main(args):
               print_every=10, training=train_full, plot_losses=False,
               writer=writer, sum_vars=merged)
 
-    model_name = './e2e_Model/e2e_'
-    model_name += 'data_' + str(args.data)
-    model_name += '_epochs_' + str(args.epochs)
-    model_name += '_batchsize_' + str(args.batch_size)
-    model_name += '_rate_' + str(args.rate)
+    # model_name = './e2e_Model/e2e_'
+    # model_name += 'data_' + str(args.data)
+    # model_name += '_epochs_' + str(args.epochs)
+    # model_name += '_batchsize_' + str(args.batch_size)
+    # model_name += '_rate_' + str(args.rate)
+    model_name = './trained_model/initial_model'
     enc_saver.save(sess, model_name+'_enc')
     dec_saver.save(sess, model_name+'_dec')
 
@@ -199,13 +201,33 @@ def l1_norm(X):
 	norm = tf.reduce_sum(X)
 	return norm 
 
+def TV_loss(X):
+    w = np.ones([3,3,1,1])*-1
+    w[1,1,0,0] = 8
+    W = tf.constant(w, dtype=tf.float32)
+    edges = tf.nn.conv2d(X, W, strides=[1,1,1,1], padding='SAME')
+    loss = tf.reduce_sum(tf.abs(edges))
+    return loss 
+
+def gram_loss(X,Y):
+    _, H_, W_, C_ = X.shape
+    H = H_.value
+    W = W_.value
+    C = C_.value 
+    psi_X = tf.reshape(X, [-1, H*W, C])
+    gram_X = tf.matmul(tf.transpose(psi_X,[0,2,1]),psi_X)/(C*H*W)
+    psi_Y = tf.reshape(Y, [-1, H*W, C])
+    gram_Y = tf.matmul(tf.transpose(psi_Y,[0,2,1]),psi_Y)/(C*H*W)
+    loss = tf.norm(gram_X-gram_Y)**2
+    return loss 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test CNN translation for given arguments')
     parser.add_argument('data', type=int) #0:NYU, 1:Airsim
     parser.add_argument('epochs', type=int)
     parser.add_argument('batch_size', type=int) 
     parser.add_argument('rate', type=float) 
-    parser.add_argument('lam', type=float) 
+    # parser.add_argument('lam', type=float) 
     parser.add_argument('GPU', type=int) 
     args = parser.parse_args()
     main(args)

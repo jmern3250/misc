@@ -79,19 +79,19 @@ def main(args):
 
     sess.run(tf.global_variables_initializer())
     loss_saver.restore(sess, './loss_network/loss_network_enc')
-    enc_saver.restore(sess, './final_Model/f_data_1_epochs_100_batchsize_5_rate_1e-05_enc')
-    dec_saver.restore(sess, './final_Model/f_data_1_epochs_100_batchsize_5_rate_1e-05_dec')
+    enc_saver.restore(sess, './trained_model/initial_model_enc')
+    dec_saver.restore(sess, './trained_model/initial_model_dec')
 
     _ = run_model(sess, X, X_, Y, is_training, mean_loss, X_train, Y_train, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, 
               print_every=10, training=train_full, plot_losses=False,
               writer=writer, sum_vars=merged)
 
-    model_name = './final_Model/f_'
-    model_name += 'data_' + str(args.data)
-    model_name += '_epochs_' + str(args.epochs)
-    model_name += '_batchsize_' + str(args.batch_size)
-    model_name += '_rate_' + str(args.rate)
+    model_name = './final_Model/final_model'
+    # model_name += 'data_' + str(args.data)
+    # model_name += '_epochs_' + str(args.epochs)
+    # model_name += '_batchsize_' + str(args.batch_size)
+    # model_name += '_rate_' + str(args.rate)
     enc_saver.save(sess, model_name+'_enc')
     dec_saver.save(sess, model_name+'_dec')
 
