@@ -58,7 +58,7 @@ def main(args):
     # feat_loss += tf.nn.l2_loss(y_feats[3] - x_feats[3])
 
     # mean_loss = tf.reduce_mean(trans_loss + args.lam*feat_loss)
-    mean_loss = tf.reduce_mean(trans_loss + 0.1*reg_loss + 100.0*feat_loss)
+    mean_loss = tf.reduce_mean(trans_loss + 0.1*reg_loss + 10.0*feat_loss)
     tf.summary.scalar('loss', mean_loss)
 
     optimizer = tf.train.AdamOptimizer(learning_rate=args.rate)
@@ -87,7 +87,7 @@ def main(args):
               print_every=10, training=train_full, plot_losses=False,
               writer=writer, sum_vars=merged)
 
-    model_name = './final_Model/final_model'
+    model_name = './trained_model/final_model'
     # model_name += 'data_' + str(args.data)
     # model_name += '_epochs_' + str(args.epochs)
     # model_name += '_batchsize_' + str(args.batch_size)
