@@ -16,8 +16,6 @@ import timeit
 
 def main(args):
     X_train, Y_train = load_data(args.data)
-    # Y_train_ = np.stack([Y_train.squeeze()]*3,axis=3)
-    # X_train_bw = (np.sum(X_train, axis=3)/(3)).reshape([-1,245,437,1])
 
     if args.GPU == 0:
         config = tf.ConfigProto(
@@ -45,12 +43,16 @@ def main(args):
     with tf.variable_scope(dis, reuse=True): 
         D_y = discriminator(X, Y, is_training, args.data)
 
-    disc_val = tf.reduce_mean(tf.log(D_y)) + tf.reduce_mean(tf.log(1-D_x))
+    eps = 1e-3
+
+    disc_val = tf.reduce_mean((D_y - 1.0)**2 + (D_x)**2)
+    disc_val_x = tf.reduce_mean(D_x**2)
 
     trans_loss = l1_norm(output-Y)
     reg_loss = TV_loss(output)
 
-    mean_loss = tf.reduce_mean(trans_loss + 0.1*reg_loss + 10.0*disc_val)
+    mean_loss = tf.reduce_mean(trans_loss + 0.1*reg_loss + 10.0*disc_val_x)
+    # mean_loss = tf.reduce_mean(trans_loss + 0.1*reg_loss)
     tf.summary.scalar('loss', mean_loss)
 
     optimizer = tf.train.AdamOptimizer(learning_rate=args.rate)
@@ -59,7 +61,7 @@ def main(args):
     dec_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Decoder')
     disc_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Discriminator')
     with tf.control_dependencies(extra_update_ops):
-        train_discriminator = optimizer.maximize(disc_val, var_list=[disc_vars])
+        train_discriminator = optimizer.minimize(disc_val, var_list=[disc_vars])
         train_generator = optimizer.minimize(mean_loss,var_list=[enc_vars, dec_vars])
     
     sess = tf.Session(config=config)
@@ -71,14 +73,13 @@ def main(args):
     writer = tf.summary.FileWriter('./tb',sess.graph)
 
     sess.run(tf.global_variables_initializer())
-    enc_saver.restore(sess, './disc_model/initial_model_enc')
-    dec_saver.restore(sess, './disc_model/initial_model_dec')
-    dec_saver.restore(sess, './disc_model/initial_model_disc')
-
+    enc_saver.restore('./disc_model/initial_model_enc')
+    dec_saver.restore('./disc_model/initial_model_dec')
+    disc_saver.restore('./disc_model/initial_model_disc')
     _ = run_model(sess, X, Y, is_training, disc_val, mean_loss, X_train, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, print_every=10,
               disc_training=train_discriminator, gen_training=train_generator, 
-              plot_losses=False, writer=writer, sum_vars=merged):
+              plot_losses=False, writer=writer, sum_vars=merged)
 
     model_name = './disc_model/final_model'
     enc_saver.save(sess, model_name+'_enc')
@@ -189,10 +190,10 @@ def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd,
     return total_loss
 
 def l1_norm(X):
-	# X = tf.sqrt(X**2)
-	X = tf.abs(X)
-	norm = tf.reduce_sum(X)
-	return norm 
+    # X = tf.sqrt(X**2)
+    X = tf.abs(X)
+    norm = tf.reduce_sum(X)
+    return norm 
 
 def TV_loss(X):
     w = np.ones([3,3,1,1])*-1
