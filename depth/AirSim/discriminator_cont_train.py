@@ -73,9 +73,9 @@ def main(args):
     writer = tf.summary.FileWriter('./tb',sess.graph)
 
     sess.run(tf.global_variables_initializer())
-    enc_saver.restore('./disc_model/initial_model_enc')
-    dec_saver.restore('./disc_model/initial_model_dec')
-    disc_saver.restore('./disc_model/initial_model_disc')
+    enc_saver.restore(sess, './disc_model/initial_model_enc')
+    dec_saver.restore(sess, './disc_model/initial_model_dec')
+    disc_saver.restore(sess, './disc_model/initial_model_disc')
     _ = run_model(sess, X, Y, is_training, disc_val, mean_loss, X_train, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, print_every=10,
               disc_training=train_discriminator, gen_training=train_generator, 
