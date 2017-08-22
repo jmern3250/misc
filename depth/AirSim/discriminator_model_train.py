@@ -46,7 +46,7 @@ def main(args):
     eps = 1e-3
 
     disc_val = tf.reduce_mean((D_y - 1.0)**2 + (D_x)**2)
-    disc_val_x = tf.reduce_mean(D_x**2)
+    disc_val_x = -1*tf.reduce_mean(D_x**2)
 
     trans_loss = l1_norm(output-Y)
     reg_loss = TV_loss(output)
