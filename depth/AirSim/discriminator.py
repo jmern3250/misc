@@ -161,6 +161,5 @@ def discriminator(X, Y, is_training, data):
                     strides=1, padding='same',
                     activation=tf.tanh, name='output')
     output += 1.0
-    output /= 0.5
-    print(output.shape)
+    output *= 0.5
     return output
