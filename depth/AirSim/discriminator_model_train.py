@@ -43,8 +43,6 @@ def main(args):
     with tf.variable_scope(dis, reuse=True): 
         D_y = discriminator(X, Y, is_training, args.data)
 
-    import pdb; pdb.set_trace()
-
     disc_val = tf.reduce_mean((D_y - 1.0)**2 + (D_x)**2)
     gen_val  = tf.reduce_mean((D_x - 1.0)**2)
 
@@ -108,7 +106,6 @@ def load_data(data_idx, num=None):
             im=Image.open(filename)
             X_train[i,:,:,:] = np.array(im)[:,:,:]/255.0
             i += 1
-            # import pdb; pdb.set_trace()
             if i == TRAIN: 
                 break
 
