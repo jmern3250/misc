@@ -45,7 +45,7 @@ def main(args):
 
     eps = 1e-3
 
-    disc_val = tf.reduce_mean((D_y - 1.0)**2 + (D_x)**2)
+    disc_val = tf.reduce_mean((D_y - 1.0)**2 + 0.0*(D_x)**2)
     disc_val_x = tf.reduce_sum((D_x - 1.0)**2)
 
     trans_loss = l1_norm(output-Y)
@@ -164,18 +164,18 @@ def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd,
             # have tensorflow compute loss and correct predictions
             # and (if given) perform a training step
             if writer is not None:
-                _, _, _ = session.run(disc_variables, feed_dict=feed_dict)
+                disc_loss, _, _ = session.run(disc_variables, feed_dict=feed_dict)
                 loss, _, summary = session.run(gen_variables,feed_dict=feed_dict)
                 writer.add_summary(summary, iter_cnt)
             else:
-                _, _ = session.run(disc_variables, feed_dict=feed_dict)
+                disc_loss, _ = session.run(disc_variables, feed_dict=feed_dict)
                 loss, _ = session.run(gen_variables,feed_dict=feed_dict)
             # aggregate performance stats
             losses.append(loss*actual_batch_size)
             
             # print every now and then
             if (iter_cnt % print_every) == 0:
-                print("Iteration %r: with minibatch training loss = %r " % (iter_cnt,loss))
+                print("Iteration %r: with generator loss = %r and discriminator loss = %r " % (iter_cnt,loss, disc_loss))
             iter_cnt += 1
         total_loss = np.sum(losses)/Xd.shape[0]
         print("Epoch {1}, Overall loss = {0:.3g}"\

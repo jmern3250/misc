@@ -46,14 +46,14 @@ def main(args):
     eps = 1e-3
 
     disc_val = tf.reduce_mean((D_y - 1.0)**2 + (D_x)**2)
-    disc_val_x = -1*tf.reduce_mean(D_x**2)*245.0*437.0
+    gen_val  = tf.reduce_mean((D_x - 1.0)**2)
 
-    trans_loss = l1_norm(output-Y)
-    reg_loss = TV_loss(output)
+    #trans_loss = l1_norm(output-Y)
+    #reg_loss = TV_loss(output)
 
-    mean_loss = tf.reduce_mean(trans_loss + 0.1*reg_loss + 10.0*disc_val_x)
+    #mean_loss = tf.reduce_mean(trans_loss + 0.1*reg_loss + 10.0*disc_val_x)
     # mean_loss = tf.reduce_mean(trans_loss + 0.1*reg_loss)
-    tf.summary.scalar('loss', mean_loss)
+    tf.summary.scalar('loss', gen_val)
 
     optimizer = tf.train.AdamOptimizer(learning_rate=args.rate)
     extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -62,7 +62,7 @@ def main(args):
     disc_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Discriminator')
     with tf.control_dependencies(extra_update_ops):
         train_discriminator = optimizer.minimize(disc_val, var_list=[disc_vars])
-        train_generator = optimizer.minimize(mean_loss,var_list=[enc_vars, dec_vars])
+        train_generator = optimizer.minimize(gen_val,var_list=[enc_vars, dec_vars])
     
     sess = tf.Session(config=config)
     enc_saver = tf.train.Saver(var_list=enc_vars)
@@ -74,7 +74,7 @@ def main(args):
 
     sess.run(tf.global_variables_initializer())
 
-    _ = run_model(sess, X, Y, is_training, disc_val, mean_loss, X_train, Y_train, 
+    _ = run_model(sess, X, Y, is_training, disc_val, gen_val, X_train, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, print_every=10,
               disc_training=train_discriminator, gen_training=train_generator, 
               plot_losses=False, writer=writer, sum_vars=merged)
@@ -162,18 +162,18 @@ def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd,
             # have tensorflow compute loss and correct predictions
             # and (if given) perform a training step
             if writer is not None:
-                _, _, _ = session.run(disc_variables, feed_dict=feed_dict)
+                d_loss, _, _ = session.run(disc_variables, feed_dict=feed_dict)
                 loss, _, summary = session.run(gen_variables,feed_dict=feed_dict)
                 writer.add_summary(summary, iter_cnt)
             else:
-                _, _ = session.run(disc_variables, feed_dict=feed_dict)
+                d_loss, _ = session.run(disc_variables, feed_dict=feed_dict)
                 loss, _ = session.run(gen_variables,feed_dict=feed_dict)
             # aggregate performance stats
             losses.append(loss*actual_batch_size)
             
             # print every now and then
             if (iter_cnt % print_every) == 0:
-                print("Iteration %r: with minibatch training loss = %r " % (iter_cnt,loss))
+                print("Iteration %r: with generator loss = %r and discriminator loss = %r " % (iter_cnt,loss,d_loss))
             iter_cnt += 1
         total_loss = np.sum(losses)/Xd.shape[0]
         print("Epoch {1}, Overall loss = {0:.3g}"\
