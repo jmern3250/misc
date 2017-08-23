@@ -43,7 +43,7 @@ def main(args):
     with tf.variable_scope(dis, reuse=True): 
         D_y = discriminator(X, Y, is_training, args.data)
 
-    eps = 1e-3
+    import pdb; pdb.set_trace()
 
     disc_val = tf.reduce_mean((D_y - 1.0)**2 + (D_x)**2)
     gen_val  = tf.reduce_mean((D_x - 1.0)**2)
@@ -53,7 +53,8 @@ def main(args):
 
     #mean_loss = tf.reduce_mean(trans_loss + 0.1*reg_loss + 10.0*disc_val_x)
     # mean_loss = tf.reduce_mean(trans_loss + 0.1*reg_loss)
-    tf.summary.scalar('loss', gen_val)
+    tf.summary.scalar('gen_loss', gen_val)
+    tf.summary.scalar('disc_loss', disc_val)
 
     optimizer = tf.train.AdamOptimizer(learning_rate=args.rate)
     extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)

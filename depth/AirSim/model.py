@@ -191,25 +191,6 @@ def decoder(feats, is_training, data):
                             activation='relu', name='c0_')
     t0_ = tf.concat([t2, c0_], axis=3, name='t2_')
 
-    # c1_ = bn_conv2d_transpose(c1, is_training, 16, [21,21], 
-    #                         strides=4, padding='valid',
-    #                         activation='relu', name='c1_')
-    # c2_ = bn_conv2d_transpose(c2, is_training, 16, [29,29], 
-    #                         strides=8, padding='valid',
-    #                         activation='relu', name='c2_')
-    # print(t2.shape)
-    # print(c0_.shape)
-
-    # print(t1.shape)
-    # print(c1_.shape)
-
-    # print(t0.shape)
-    # print(c2_.shape)
-    
-    
-    # import pdb; pdb.set_trace()
-    # c_sum = t2 + c1_ + c2_
-
     c_out = tf.layers.conv2d(
                             inputs=t0_, 
                             filters=1,

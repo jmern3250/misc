@@ -141,28 +141,26 @@ def res_conv2d(X, is_training, filters, kernel_size, strides=1, name=None):
                             renorm=True,  
                             name='bn2')
         added = bn2 + X
-        # h2 = tf.nn.relu(added, name='h2')
     return added
 
 
 def discriminator(X, Y, is_training, data):
     inp = tf.concat([X,Y], axis=3)
     c0 = bn_conv2d(inp, is_training, 32, [9,9], 
-                    strides=2, padding='valid',
+                    strides=4, padding='valid',
                     activation='relu', name='c0')
     c1 = bn_conv2d(c0, is_training, 64, [3,3], 
-                    strides=2, padding='valid',
+                    strides=4, padding='valid',
                     activation='relu', name='c1')
     c2 = bn_conv2d(c1, is_training, 128, [3,3], 
-                    strides=2, padding='valid',
+                    strides=4, padding='valid',
                     activation='relu', name='c2')
     r0 = res_conv2d(c2, is_training, 128, [3,3], strides=1, name='r0')
     r1 = res_conv2d(r0, is_training, 128, [3,3], strides=1, name='r1')
-    r2 = res_conv2d(r1, is_training, 128, [3,3], strides=1, name='r2')
-    r3 = res_conv2d(r2, is_training, 128, [3,3], strides=1, name='r3')
-    output = bn_conv2d(r3, is_training, 1, [3,3], 
+    output = tf.layers.conv2d(r1, 1, [3,3], 
                     strides=1, padding='same',
-                    activation='tanh', name='output')
+                    activation=tf.tanh, name='output')
     output += 1.0
     output /= 0.5
+    print(output.shape)
     return output
