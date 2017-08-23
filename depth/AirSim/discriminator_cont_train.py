@@ -46,12 +46,12 @@ def main(args):
     eps = 1e-3
 
     disc_val = tf.reduce_mean((D_y - 1.0)**2 + (D_x)**2)
-    disc_val_x = -1*tf.reduce_mean(D_x**2)
+    disc_val_x = -1*tf.reduce_mean(D_x**2 + 1.0)*245*437
 
     trans_loss = l1_norm(output-Y)
     reg_loss = TV_loss(output)
 
-    mean_loss = tf.reduce_mean(0.0*trans_loss + 0.0*reg_loss + 1.0*disc_val_x)
+    mean_loss = tf.reduce_mean(1.0*trans_loss + 0.1*reg_loss + 10.0*disc_val_x)
     # mean_loss = tf.reduce_mean(trans_loss + 0.1*reg_loss)
     tf.summary.scalar('loss', mean_loss)
 
