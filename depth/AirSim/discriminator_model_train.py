@@ -43,8 +43,8 @@ def main(args):
     with tf.variable_scope(dis, reuse=True): 
         D_y = discriminator(X, Y, is_training, args.data)
 
-    disc_val = tf.reduce_mean((D_y - 1.0)**2 + (D_x)**2)
-    gen_val  = tf.reduce_mean((D_x - 1.0)**2)
+    disc_val = tf.reduce_sum((D_y - 1.0)**2 + (D_x)**2)
+    gen_val  = -1*tf.reduce_sum((D_x)**2)
 
     #trans_loss = l1_norm(output-Y)
     #reg_loss = TV_loss(output)
