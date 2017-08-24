@@ -43,8 +43,8 @@ def main(args):
     with tf.variable_scope(dis, reuse=True): 
         D_y = discriminator(X, Y, is_training, args.data)
 
-    disc_val = tf.reduce_sum((D_y - 1.0)**2 + (D_x)**2)
-    gen_val  = -1*tf.reduce_sum((D_x)**2)
+    disc_val = tf.reduce_mean((D_y - 1.0)**2 + (D_x)**2)
+    gen_val  = -1*tf.reduce_mean((D_x)**2)
 
     #trans_loss = l1_norm(output-Y)
     #reg_loss = TV_loss(output)
@@ -196,7 +196,7 @@ def TV_loss(X):
     w[1,1,0,0] = 8
     W = tf.constant(w, dtype=tf.float32)
     edges = tf.nn.conv2d(X, W, strides=[1,1,1,1], padding='SAME')
-    loss = tf.reduce_sum(tf.abs(edges))
+    loss = tf.reduce_mean(tf.abs(edges))
     return loss 
 
 def gram_loss(X,Y):
@@ -208,8 +208,9 @@ def gram_loss(X,Y):
     gram_X = tf.matmul(tf.transpose(psi_X,[0,2,1]),psi_X)/(C*H*W)
     psi_Y = tf.reshape(Y, [-1, H*W, C])
     gram_Y = tf.matmul(tf.transpose(psi_Y,[0,2,1]),psi_Y)/(C*H*W)
-    loss = tf.norm(gram_X-gram_Y)**2
-    return loss 
+    loss = tf.norm(gram_X-gram_Y,axis=[1,2])**2
+    mean_loss = tf.reduce_mean(loss)
+    return mean_loss 
 
 def disc_error(X, real):
     ''' X: Output map from discriminator
