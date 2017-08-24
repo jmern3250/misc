@@ -16,6 +16,7 @@ import timeit
 
 def main(args):
     X_train, Y_train = load_data(args.data)
+    Y_train_ = np.random.shuffle(Y_train)
 
     if args.GPU == 0:
         config = tf.ConfigProto(
@@ -32,6 +33,7 @@ def main(args):
     elif args.data == 1:
         X = tf.placeholder(tf.float32, [None, 245, 437, 3])
         Y = tf.placeholder(tf.float32, [None, 245, 437, 1])
+        Y_ = tf.placeholder(tf.float32, [None, 245, 437, 1])
     is_training = tf.placeholder(tf.bool)
     
     with tf.variable_scope('Encoder') as enc: 
@@ -43,17 +45,19 @@ def main(args):
     with tf.variable_scope(dis, reuse=True): 
         D_y = discriminator(X, Y, is_training, args.data)
 
-    eps = 1e-3
-
-    disc_val = tf.reduce_sum((D_y - 1.0)**2 + 0.0*(D_x)**2)
-    disc_val_x = -1*tf.reduce_sum((D_x)**2)
+    disc_val = 100.0*tf.reduce_mean((D_y - 1.0)**2 + (D_x)**2)
+    gen_val  = 100.0 - 100.0*tf.reduce_mean((D_x)**2)
 
     trans_loss = l1_norm(output-Y)
-    reg_loss = TV_loss(output)
+    reg_loss = 0.1*TV_loss(output)
 
-    mean_loss = tf.reduce_mean(1.0*trans_loss + 0.1*reg_loss + 10.0*disc_val_x)
+    mean_loss = trans_loss + reg_loss + gen_val 
+
+    #mean_loss = tf.reduce_mean(trans_loss + 0.1*reg_loss + 10.0*disc_val_x)
     # mean_loss = tf.reduce_mean(trans_loss + 0.1*reg_loss)
-    tf.summary.scalar('loss', mean_loss)
+    tf.summary.scalar('loss/mean_loss', mean_loss)
+    tf.summary.scalar('loss/gen_loss', gen_val)
+    tf.summary.scalar('loss/disc_loss', disc_val)
 
     optimizer = tf.train.AdamOptimizer(learning_rate=args.rate)
     extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -62,7 +66,7 @@ def main(args):
     disc_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Discriminator')
     with tf.control_dependencies(extra_update_ops):
         train_discriminator = optimizer.minimize(disc_val, var_list=[disc_vars])
-        train_generator = optimizer.minimize(mean_loss,var_list=[enc_vars, dec_vars])
+        train_generator = optimizer.minimize(mean_loss, var_list=[enc_vars, dec_vars])
     
     sess = tf.Session(config=config)
     enc_saver = tf.train.Saver(var_list=enc_vars)
@@ -76,7 +80,8 @@ def main(args):
     enc_saver.restore(sess, './disc_model/initial_model_enc')
     dec_saver.restore(sess, './disc_model/initial_model_dec')
     disc_saver.restore(sess, './disc_model/initial_model_disc')
-    _ = run_model(sess, X, Y, is_training, disc_val, mean_loss, X_train, Y_train, 
+
+    _ = run_model(sess, X, Y, is_training, disc_val, gen_val, X_train, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, print_every=10,
               disc_training=train_discriminator, gen_training=train_generator, 
               plot_losses=False, writer=writer, sum_vars=merged)
@@ -109,7 +114,6 @@ def load_data(data_idx, num=None):
             im=Image.open(filename)
             X_train[i,:,:,:] = np.array(im)[:,:,:]/255.0
             i += 1
-            # import pdb; pdb.set_trace()
             if i == TRAIN: 
                 break
 
@@ -132,8 +136,10 @@ def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd,
               plot_losses=False, writer=None, sum_vars=None):
     
     # shuffle indicies
-    train_indicies = np.arange(Xd.shape[0])
-    np.random.shuffle(train_indicies)
+    gen_train_indicies = np.arange(Xd.shape[0])
+    disc_train_indicies = np.arange(Xd.shape[0])
+    np.random.shuffle(gen_train_indicies)
+    np.random.shuffle(disc_train_indicies)
     
     # setting up variables we want to compute (and optimizing)
     # if we have a training function, add that to things we compute
@@ -152,30 +158,34 @@ def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd,
         for i in range(int(math.ceil(Xd.shape[0]/batch_size))):
             # generate indicies for the batch
             start_idx = (i*batch_size)%Xd.shape[0]
-            idx = train_indicies[start_idx:start_idx+batch_size]
+            gen_idx = gen_train_indicies[start_idx:start_idx+batch_size]
+            disc_idx = disc_train_indicies[start_idx:start_idx+batch_size]
             
             # create a feed dictionary for this batch
-            feed_dict = {X: Xd[idx,:],
-                         Y: Yd[idx,:],
-                         is_training: True}
+            gen_feed_dict = {X: Xd[gen_idx,:],
+                            Y: Yd[gen_idx,:],
+                            is_training: True}
+            disc_feed_dict = {X: Xd[disc_idx,:],
+                            Y: Yd[disc_idx,:],
+                            is_training: True}
             # get batch size
             actual_batch_size = Yd[i:i+batch_size].shape[0]
             
             # have tensorflow compute loss and correct predictions
             # and (if given) perform a training step
             if writer is not None:
-                disc_loss, _, _ = session.run(disc_variables, feed_dict=feed_dict)
-                loss, _, summary = session.run(gen_variables,feed_dict=feed_dict)
+                d_loss, _, _ = session.run(disc_variables, feed_dict=disc_feed_dict)
+                loss, _, summary = session.run(gen_variables,feed_dict=gen_feed_dict)
                 writer.add_summary(summary, iter_cnt)
             else:
-                disc_loss, _ = session.run(disc_variables, feed_dict=feed_dict)
-                loss, _ = session.run(gen_variables,feed_dict=feed_dict)
+                d_loss, _ = session.run(disc_variables, feed_dict=disc_feed_dict)
+                loss, _ = session.run(gen_variables,feed_dict=gen_feed_dict)
             # aggregate performance stats
             losses.append(loss*actual_batch_size)
             
             # print every now and then
             if (iter_cnt % print_every) == 0:
-                print("Iteration %r: with generator loss = %r and discriminator loss = %r " % (iter_cnt,loss, disc_loss))
+                print("Iteration %r: with generator loss = %r and discriminator loss = %r " % (iter_cnt,loss,d_loss))
             iter_cnt += 1
         total_loss = np.sum(losses)/Xd.shape[0]
         print("Epoch {1}, Overall loss = {0:.3g}"\
@@ -200,7 +210,7 @@ def TV_loss(X):
     w[1,1,0,0] = 8
     W = tf.constant(w, dtype=tf.float32)
     edges = tf.nn.conv2d(X, W, strides=[1,1,1,1], padding='SAME')
-    loss = tf.reduce_sum(tf.abs(edges))
+    loss = tf.reduce_mean(tf.abs(edges))
     return loss 
 
 def gram_loss(X,Y):
@@ -212,8 +222,9 @@ def gram_loss(X,Y):
     gram_X = tf.matmul(tf.transpose(psi_X,[0,2,1]),psi_X)/(C*H*W)
     psi_Y = tf.reshape(Y, [-1, H*W, C])
     gram_Y = tf.matmul(tf.transpose(psi_Y,[0,2,1]),psi_Y)/(C*H*W)
-    loss = tf.norm(gram_X-gram_Y)**2
-    return loss 
+    loss = tf.norm(gram_X-gram_Y,axis=[1,2])**2
+    mean_loss = tf.reduce_mean(loss)
+    return mean_loss 
 
 def disc_error(X, real):
     ''' X: Output map from discriminator
