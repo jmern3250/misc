@@ -156,10 +156,10 @@ def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd,
             disc_idx = disc_train_indicies[start_idx:start_idx+batch_size]
             
             # create a feed dictionary for this batch
-            gen_feed_dict = {X: Xd[idx,:],
+            gen_feed_dict = {X: Xd[gen_idx,:],
                             Y: Yd[gen_idx,:],
                             is_training: True}
-            disc_feed_dict = {X: Xd[idx,:],
+            disc_feed_dict = {X: Xd[disc_idx,:],
                             Y: Yd[disc_idx,:],
                             is_training: True}
             # get batch size
