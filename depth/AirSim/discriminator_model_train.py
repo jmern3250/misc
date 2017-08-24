@@ -16,6 +16,7 @@ import timeit
 
 def main(args):
     X_train, Y_train = load_data(args.data)
+    Y_train_ = np.random.shuffle(Y_train)
 
     if args.GPU == 0:
         config = tf.ConfigProto(
@@ -32,6 +33,7 @@ def main(args):
     elif args.data == 1:
         X = tf.placeholder(tf.float32, [None, 245, 437, 3])
         Y = tf.placeholder(tf.float32, [None, 245, 437, 1])
+        Y_ = tf.placeholder(tf.float32, [None, 245, 437, 1])
     is_training = tf.placeholder(tf.bool)
     
     with tf.variable_scope('Encoder') as enc: 
@@ -43,8 +45,8 @@ def main(args):
     with tf.variable_scope(dis, reuse=True): 
         D_y = discriminator(X, Y, is_training, args.data)
 
-    disc_val = tf.reduce_mean((D_y - 1.0)**2 + (D_x)**2)
-    gen_val  = -1*tf.reduce_mean((D_x)**2)
+    disc_val = 100.0*tf.reduce_mean((D_y - 1.0)**2 + (D_x)**2)
+    gen_val  = 100.0 - 100.0*tf.reduce_mean((D_x)**2)
 
     #trans_loss = l1_norm(output-Y)
     #reg_loss = TV_loss(output)
@@ -128,8 +130,10 @@ def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd,
               plot_losses=False, writer=None, sum_vars=None):
     
     # shuffle indicies
-    train_indicies = np.arange(Xd.shape[0])
-    np.random.shuffle(train_indicies)
+    gen_train_indicies = np.arange(Xd.shape[0])
+    disc_train_indicies = np.arange(Xd.shape[0])
+    np.random.shuffle(gen_train_indicies)
+    np.random.shuffle(disc_train_indicies)
     
     # setting up variables we want to compute (and optimizing)
     # if we have a training function, add that to things we compute
@@ -148,24 +152,28 @@ def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd,
         for i in range(int(math.ceil(Xd.shape[0]/batch_size))):
             # generate indicies for the batch
             start_idx = (i*batch_size)%Xd.shape[0]
-            idx = train_indicies[start_idx:start_idx+batch_size]
+            gen_idx = gen_train_indicies[start_idx:start_idx+batch_size]
+            disc_idx = disc_train_indicies[start_idx:start_idx+batch_size]
             
             # create a feed dictionary for this batch
-            feed_dict = {X: Xd[idx,:],
-                         Y: Yd[idx,:],
-                         is_training: True}
+            gen_feed_dict = {X: Xd[idx,:],
+                            Y: Yd[gen_idx,:],
+                            is_training: True}
+            disc_feed_dict = {X: Xd[idx,:],
+                            Y: Yd[disc_idx,:],
+                            is_training: True}
             # get batch size
             actual_batch_size = Yd[i:i+batch_size].shape[0]
             
             # have tensorflow compute loss and correct predictions
             # and (if given) perform a training step
             if writer is not None:
-                d_loss, _, _ = session.run(disc_variables, feed_dict=feed_dict)
-                loss, _, summary = session.run(gen_variables,feed_dict=feed_dict)
+                d_loss, _, _ = session.run(disc_variables, feed_dict=disc_feed_dict)
+                loss, _, summary = session.run(gen_variables,feed_dict=gen_feed_dict)
                 writer.add_summary(summary, iter_cnt)
             else:
-                d_loss, _ = session.run(disc_variables, feed_dict=feed_dict)
-                loss, _ = session.run(gen_variables,feed_dict=feed_dict)
+                d_loss, _ = session.run(disc_variables, feed_dict=disc_feed_dict)
+                loss, _ = session.run(gen_variables,feed_dict=gen_feed_dict)
             # aggregate performance stats
             losses.append(loss*actual_batch_size)
             

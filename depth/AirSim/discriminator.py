@@ -149,10 +149,10 @@ def discriminator(X, Y, is_training, data):
     c0 = bn_conv2d(inp, is_training, 32, [9,9], 
                     strides=4, padding='valid',
                     activation='relu', name='c0')
-    c1 = bn_conv2d(c0, is_training, 64, [3,3], 
+    c1 = bn_conv2d(c0, is_training, 64, [9,9], 
                     strides=4, padding='valid',
                     activation='relu', name='c1')
-    c2 = bn_conv2d(c1, is_training, 128, [3,3], 
+    c2 = bn_conv2d(c1, is_training, 128, [9,9], 
                     strides=4, padding='valid',
                     activation='relu', name='c2')
     r0 = res_conv2d(c2, is_training, 128, [3,3], strides=1, name='r0')
