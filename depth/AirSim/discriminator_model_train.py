@@ -201,7 +201,7 @@ def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd,
 def l1_norm(X):
 	# X = tf.sqrt(X**2)
 	X = tf.abs(X)
-	norm = tf.reduce_sum(X)
+	norm = tf.reduce_mean(X)
 	return norm 
 
 def TV_loss(X):
