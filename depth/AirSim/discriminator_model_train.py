@@ -80,7 +80,7 @@ def main(args):
 
     sess.run(tf.global_variables_initializer())
 
-    _ = run_model(sess, X, Y, is_training, disc_val, gen_val, X_train, Y_train, 
+    _ = run_model(sess, X, Y, is_training, disc_val, mean_loss, X_train, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, print_every=10,
               disc_training=train_discriminator, gen_training=train_generator, 
               plot_losses=False, writer=writer, sum_vars=merged)
