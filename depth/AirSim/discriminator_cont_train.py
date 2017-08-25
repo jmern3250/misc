@@ -45,10 +45,10 @@ def main(args):
     with tf.variable_scope(dis, reuse=True): 
         D_y = discriminator(X, Y, is_training, args.data)
 
-    disc_val = 100.0*tf.reduce_mean((D_y - 1.0)**2 + (D_x)**2)
-    gen_val  = 100.0 - 100.0*tf.reduce_mean((D_x)**2)
+    disc_val = tf.reduce_mean((D_y - 1.0)**2 + (D_x)**2)
+    gen_val  = 1.0 - tf.reduce_mean((D_x)**2)
 
-    trans_loss = l1_norm(output-Y)
+    trans_loss = 100.0*l1_norm(output-Y)
     reg_loss = 0.1*TV_loss(output)
 
     mean_loss = trans_loss + reg_loss + gen_val 
@@ -81,7 +81,7 @@ def main(args):
     dec_saver.restore(sess, './disc_model/initial_model_dec')
     disc_saver.restore(sess, './disc_model/initial_model_disc')
 
-    _ = run_model(sess, X, Y, is_training, disc_val, gen_val, X_train, Y_train, 
+    _ = run_model(sess, X, Y, is_training, disc_val, mean_loss, X_train, Y_train, 
               epochs=args.epochs, batch_size=args.batch_size, print_every=10,
               disc_training=train_discriminator, gen_training=train_generator, 
               plot_losses=False, writer=writer, sum_vars=merged)
@@ -202,7 +202,7 @@ def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd,
 def l1_norm(X):
     # X = tf.sqrt(X**2)
     X = tf.abs(X)
-    norm = tf.reduce_sum(X)
+    norm = tf.reduce_mean(X)
     return norm 
 
 def TV_loss(X):
