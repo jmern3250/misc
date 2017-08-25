@@ -68,7 +68,7 @@ def main(args):
     disc_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Discriminator')
     with tf.control_dependencies(extra_update_ops):
         train_discriminator = optimizer.minimize(disc_val, var_list=[disc_vars])
-        train_generator = optimizer.minimize(gen_val,var_list=[enc_vars, dec_vars])
+        train_generator = optimizer.minimize(mean_loss,var_list=[enc_vars, dec_vars])
     
     sess = tf.Session(config=config)
     enc_saver = tf.train.Saver(var_list=enc_vars)
