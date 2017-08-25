@@ -160,6 +160,6 @@ def discriminator(X, Y, is_training, data):
     output = tf.layers.conv2d(r1, 1, [3,3], 
                     strides=1, padding='same',
                     activation=tf.tanh, name='output')
-    output += 1.0
-    output *= 0.5
+    # output += 1.0
+    # output *= 0.5
     return output
