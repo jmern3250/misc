@@ -45,28 +45,40 @@ def main(args):
     with tf.variable_scope(dis, reuse=True): 
         D_y = discriminator(X, Y, is_training, args.data)
 
-    disc_val = tf.reduce_mean((D_y - 1.0)**2 + (D_x)**2)
-    gen_val  = 1.0 - tf.reduce_mean((D_x)**2)
+    disc_val = -1.0*(tf.reduce_mean(D_y) - tf.reduce_mean(D_x))
+    gen_val  = -tf.reduce_mean(D_x)
 
-    trans_loss = 100.0*l1_norm(output-Y)
+    trans_loss = 10.0*l1_norm(output-Y)
     reg_loss = 0.1*TV_loss(output)
 
     mean_loss = trans_loss + reg_loss + gen_val 
 
+    #trans_loss = l1_norm(output-Y)
+    #reg_loss = TV_loss(output)
+
     #mean_loss = tf.reduce_mean(trans_loss + 0.1*reg_loss + 10.0*disc_val_x)
     # mean_loss = tf.reduce_mean(trans_loss + 0.1*reg_loss)
-    tf.summary.scalar('loss/mean_loss', mean_loss)
-    tf.summary.scalar('loss/gen_loss', gen_val)
-    tf.summary.scalar('loss/disc_loss', disc_val)
+    tf.summary.scalar('gen_loss', gen_val)
+    tf.summary.scalar('disc_loss', disc_val)
 
-    optimizer = tf.train.AdamOptimizer(learning_rate=args.rate)
+    gen_optimizer = tf.train.AdamOptimizer(learning_rate=args.rate)
+    disc_optimizer = tf.train.AdamOptimizer(learning_rate=args.rate)
     extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     enc_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Encoder')
     dec_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Decoder')
     disc_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='Discriminator')
+    disc_weights = []
+    for var in disc_vars:
+        if 'kernel' in var.name: 
+            disc_weights.append(var)
+
+    clip_weights = [w.assign(tf.clip_by_value(w, -0.01, 0.01)) for w in disc_weights]
+
+    # clip_weights = clip_weight_list(disc_weights)
+
     with tf.control_dependencies(extra_update_ops):
-        train_discriminator = optimizer.minimize(disc_val, var_list=[disc_vars])
-        train_generator = optimizer.minimize(mean_loss, var_list=[enc_vars, dec_vars])
+        train_discriminator = disc_optimizer.minimize(disc_val, var_list=[disc_vars])
+        train_generator = gen_optimizer.minimize(mean_loss,var_list=[enc_vars, dec_vars])
     
     sess = tf.Session(config=config)
     enc_saver = tf.train.Saver(var_list=enc_vars)
@@ -81,7 +93,7 @@ def main(args):
     dec_saver.restore(sess, './disc_model/initial_model_dec')
     disc_saver.restore(sess, './disc_model/initial_model_disc')
 
-    _ = run_model(sess, X, Y, is_training, disc_val, mean_loss, X_train, Y_train, 
+    _ = run_model(sess, X, Y, is_training, disc_val, mean_loss, X_train, Y_train, clip_weights,  
               epochs=args.epochs, batch_size=args.batch_size, print_every=10,
               disc_training=train_discriminator, gen_training=train_generator, 
               plot_losses=False, writer=writer, sum_vars=merged)
@@ -130,7 +142,7 @@ def load_data(data_idx, num=None):
 
     return X_train, Y_train
 
-def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd, 
+def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd, clip_weights,
               epochs=1, batch_size=64, print_every=100,
               disc_training=None, gen_training=None, 
               plot_losses=False, writer=None, sum_vars=None):
@@ -144,7 +156,7 @@ def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd,
     # setting up variables we want to compute (and optimizing)
     # if we have a training function, add that to things we compute
     gen_variables = [loss_val, gen_training]
-    disc_variables = [disc_val, disc_training]
+    disc_variables = [disc_val, disc_training, clip_weights]
     if writer is not None: 
         gen_variables.append(sum_vars)
         disc_variables.append(sum_vars)
@@ -174,11 +186,11 @@ def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd,
             # have tensorflow compute loss and correct predictions
             # and (if given) perform a training step
             if writer is not None:
-                d_loss, _, _ = session.run(disc_variables, feed_dict=disc_feed_dict)
+                d_loss, _, _, _ = session.run(disc_variables, feed_dict=disc_feed_dict)
                 loss, _, summary = session.run(gen_variables,feed_dict=gen_feed_dict)
                 writer.add_summary(summary, iter_cnt)
             else:
-                d_loss, _ = session.run(disc_variables, feed_dict=disc_feed_dict)
+                d_loss, _, _ = session.run(disc_variables, feed_dict=disc_feed_dict)
                 loss, _ = session.run(gen_variables,feed_dict=gen_feed_dict)
             # aggregate performance stats
             losses.append(loss*actual_batch_size)
@@ -241,6 +253,11 @@ def disc_error(X, real):
     loss = tf.nn.l2_loss(error_map)
     return loss
 
+# def clip_weight_list(weights):
+
+#     for weight in weights: 
+#         tf.assign(weight, tf.clip_by_value(weight, -0.01, 0.01))
+#     return 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test CNN translation for given arguments')
@@ -252,3 +269,4 @@ if __name__ == '__main__':
     parser.add_argument('GPU', type=int) 
     args = parser.parse_args()
     main(args)
+    
