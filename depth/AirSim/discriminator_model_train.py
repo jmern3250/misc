@@ -48,7 +48,7 @@ def main(args):
     disc_val = -1.0*(tf.reduce_mean(D_y) - tf.reduce_mean(D_x))
     gen_val  = -tf.reduce_mean(D_x)
 
-    trans_loss = 10.0*l1_norm(output-Y)
+    trans_loss = 50.0*l1_norm(output-Y)
     reg_loss = 0.1*TV_loss(output)
 
     mean_loss = trans_loss + reg_loss + gen_val 
