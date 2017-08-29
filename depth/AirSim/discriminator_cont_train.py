@@ -48,8 +48,8 @@ def main(args):
     disc_val = -1.0*(tf.reduce_mean(D_y) - tf.reduce_mean(D_x))
     gen_val  = -tf.reduce_mean(D_x)
 
-    trans_loss = 50.0*l1_norm(output-Y)
-    reg_loss = 0.1*TV_loss(output)
+    trans_loss = 100.0*l1_norm(output-Y)
+    reg_loss = 0.0*TV_loss(output)
 
     mean_loss = trans_loss + reg_loss + gen_val 
 
@@ -150,6 +150,9 @@ def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd, clip_weigh
     # shuffle indicies
     gen_train_indicies = np.arange(Xd.shape[0])
     disc_train_indicies = np.arange(Xd.shape[0])
+    n_critic = 5
+    disc_train_indicies = np.tile(disc_train_indicies, n_critic)
+
     np.random.shuffle(gen_train_indicies)
     np.random.shuffle(disc_train_indicies)
     
@@ -169,17 +172,24 @@ def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd, clip_weigh
         # make sure we iterate over the dataset once
         for i in range(int(math.ceil(Xd.shape[0]/batch_size))):
             # generate indicies for the batch
-            start_idx = (i*batch_size)%Xd.shape[0]
-            gen_idx = gen_train_indicies[start_idx:start_idx+batch_size]
-            disc_idx = disc_train_indicies[start_idx:start_idx+batch_size]
+            gen_start_idx = (i*batch_size)%Xd.shape[0]
+            gen_idx = gen_train_indicies[gen_start_idx:gen_start_idx+batch_size]
+            for j in range(n_critic):
+                disc_start_idx = (i*n_critic + j)*batch_size%Xd.shape[0] 
+                disc_idx = disc_train_indicies[disc_start_idx:disc_start_idx+batch_size]
+                disc_feed_dict = {X: Xd[disc_idx,:],
+                            Y: Yd[disc_idx,:],
+                            is_training: True}
+                if writer is not None:
+                    d_loss, _, _, _ = session.run(disc_variables, feed_dict=disc_feed_dict)
+                else:
+                    d_loss, _, _ = session.run(disc_variables, feed_dict=disc_feed_dict)
             
             # create a feed dictionary for this batch
             gen_feed_dict = {X: Xd[gen_idx,:],
                             Y: Yd[gen_idx,:],
                             is_training: True}
-            disc_feed_dict = {X: Xd[disc_idx,:],
-                            Y: Yd[disc_idx,:],
-                            is_training: True}
+            
             # get batch size
             actual_batch_size = Yd[i:i+batch_size].shape[0]
             
@@ -269,4 +279,3 @@ if __name__ == '__main__':
     parser.add_argument('GPU', type=int) 
     args = parser.parse_args()
     main(args)
-    
