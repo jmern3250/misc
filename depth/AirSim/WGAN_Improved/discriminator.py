@@ -7,7 +7,7 @@ import tensorflow as tf
 
 
 
-def d_res_conv2d(X, is_training, filters, kernel_size, strides=1, name=None):
+def d_res_conv2d(X, filters, kernel_size, strides=1, name=None):
     if name is not None: 
         with tf.variable_scope(name):
             c1 = tf.layers.conv2d(
@@ -75,9 +75,9 @@ def discriminator(X, Y):
                         padding='valid',
                         activation=tf.nn.relu, 
                         name='c2')
-    r0 = d_res_conv2d(c2, is_training, 128, [3,3], strides=1, name='r0')
-    r1 = d_res_conv2d(r0, is_training, 128, [3,3], strides=1, name='r1')
-    r2 = d_res_conv2d(r1, is_training, 128, [3,3], strides=1, name='r2')
+    r0 = d_res_conv2d(c2, 128, [3,3], strides=1, name='r0')
+    r1 = d_res_conv2d(r0, 128, [3,3], strides=1, name='r1')
+    r2 = d_res_conv2d(r1, 128, [3,3], strides=1, name='r2')
     output = tf.layers.conv2d(r2, 1, [3,3], 
                     strides=1, padding='same',
                     activation=None, name='output')
