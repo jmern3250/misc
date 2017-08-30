@@ -86,7 +86,7 @@ def main(args):
     gen_optimizer = tf.train.AdamOptimizer(learning_rate=args.rate,beta1=0.0,beta2=0.9,name='gen_adam')
     disc_optimizer = tf.train.AdamOptimizer(learning_rate=args.rate,beta1=0.0,beta2=0.9,name='disc_adam')
     with tf.control_dependencies(extra_update_ops):
-        train_discriminator = disc_optimizer.minimize(disc_lsos, var_list=[disc_vars])
+        train_discriminator = disc_optimizer.minimize(disc_loss, var_list=[disc_vars])
         train_generator = gen_optimizer.minimize(gen_loss,var_list=[enc_vars, dec_vars])
     
     sess = tf.Session(config=config)
