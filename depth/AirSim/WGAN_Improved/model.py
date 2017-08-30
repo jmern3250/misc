@@ -203,4 +203,4 @@ def decoder(feats, is_training, data):
                             padding='valid',
                             activation=tf.tanh,
                             name='c0')
-    return output
+    return c_out 
