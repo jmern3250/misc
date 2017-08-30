@@ -183,10 +183,10 @@ def run_model(session, X, Y, X_, Y_, is_training, disc_val, loss_val, Xd, Yd, sa
         for i in range(int(math.ceil(Xd.shape[0]/batch_size))):
             # generate indicies for the batch
             gen_start_idx = (i*batch_size)%Xd.shape[0]
-            gen_idx = gen_train_indicies[start_idx:start_idx+batch_size]
+            gen_idx = gen_train_indicies[gen_start_idx:gen_start_idx+batch_size]
             for j in range(n_critic):
                 disc_start_idx = (i*n_critic + j)*batch_size%Xd.shape[0] 
-                disc_idx = disc_train_indicies[start_idx:start_idx+batch_size]
+                disc_idx = disc_train_indicies[disc_start_idx:disc_start_idx+batch_size]
                 disc_feed_dict = {X: Xd[disc_idx,:],
                             Y: Yd[disc_idx,:],
                             X_: (Xd[disc_idx,:]+Xd[gen_idx,:])/2.0,
@@ -208,7 +208,6 @@ def run_model(session, X, Y, X_, Y_, is_training, disc_val, loss_val, Xd, Yd, sa
             # have tensorflow compute loss and correct predictions
             # and (if given) perform a training step
             if writer is not None:
-                d_loss, _, _, _ = session.run(disc_variables, feed_dict=disc_feed_dict)
                 loss, _, summary = session.run(gen_variables,feed_dict=gen_feed_dict)
                 writer.add_summary(summary, iter_cnt)
             else:
