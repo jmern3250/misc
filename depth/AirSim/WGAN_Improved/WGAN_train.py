@@ -150,7 +150,7 @@ def load_data(data_idx, num=None):
 
     return X_train, Y_train
 
-def run_model(session, X, Y, X_, Y_, is_training, disc_val, loss_val, Xd, Yd, savers, 
+def run_model(session, X, Y, X_, Y_, is_training, disc_loss, gen_loss, Xd, Yd, savers, 
               epochs=1, batch_size=64, print_every=100,
               disc_training=None, gen_training=None, 
               plot_losses=False, writer=None, sum_vars=None):
@@ -168,10 +168,10 @@ def run_model(session, X, Y, X_, Y_, is_training, disc_val, loss_val, Xd, Yd, sa
     
     # setting up variables we want to compute (and optimizing)
     # if we have a training function, add that to things we compute
-    gen_variables = [loss_val, gen_training]
-    disc_variables = [disc_val, disc_training]
+    gen_variables = [gen_loss, gen_training]
+    disc_variables = [disc_loss, disc_training]
     if writer is not None: 
-        gen_variables.append(sum_vars)
+        # gen_variables.append(sum_vars)
         disc_variables.append(sum_vars)
 
     # counter 
@@ -209,12 +209,7 @@ def run_model(session, X, Y, X_, Y_, is_training, disc_val, loss_val, Xd, Yd, sa
             
             # have tensorflow compute loss and correct predictions
             # and (if given) perform a training step
-            if writer is not None:
-                loss, _, summary = session.run(gen_variables,feed_dict=gen_feed_dict)
-                writer.add_summary(summary, iter_cnt)
-            else:
-                d_loss, _, _ = session.run(disc_variables, feed_dict=disc_feed_dict)
-                loss, _ = session.run(gen_variables,feed_dict=gen_feed_dict)
+            loss, _ = session.run(gen_variables,feed_dict=gen_feed_dict)
             # aggregate performance stats
             losses.append(loss*actual_batch_size)
             
