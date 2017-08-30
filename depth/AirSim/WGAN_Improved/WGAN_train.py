@@ -45,9 +45,9 @@ def main(args):
         D_y = discriminator(X, Y)
 
     critic_loss = tf.reduce_mean(D_x) - tf.reduce_mean(D_y) 
-    grads = tf.gradients(critic_loss, X_)
-    import pdb; pdb.set_trace()
-    gradient_penalty = 10.0*tf.reduce_mean((tf.norm(tf.gradients(critic_loss, X_), ord='euclidean', axis=[1,2,3])-1)**2)
+    # grads = tf.gradients(critic_loss, X_)
+    # import pdb; pdb.set_trace()
+    gradient_penalty = 10.0*tf.reduce_mean((tf.norm(tf.gradients(critic_loss, X_), ord='euclidean', axis=[1,2])-1)**2)
     
 
     disc_loss = critic_loss + gradient_penalty  
