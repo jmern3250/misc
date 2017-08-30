@@ -7,7 +7,6 @@ import argparse
 
 from model import * 
 from discriminator import discriminator
-import autoencoder 
 
 import numpy as np
 from numpy import matlib
