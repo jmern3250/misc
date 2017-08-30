@@ -86,8 +86,8 @@ def main(args):
     gen_optimizer = tf.train.AdamOptimizer(learning_rate=args.rate,beta1=0.0,beta2=0.9,name='gen_adam')
     disc_optimizer = tf.train.AdamOptimizer(learning_rate=args.rate,beta1=0.0,beta2=0.9,name='disc_adam')
     with tf.control_dependencies(extra_update_ops):
-        train_discriminator = disc_optimizer.minimize(disc_val, var_list=[disc_vars])
-        train_generator = gen_optimizer.minimize(mean_loss,var_list=[enc_vars, dec_vars])
+        train_discriminator = disc_optimizer.minimize(disc_lsos, var_list=[disc_vars])
+        train_generator = gen_optimizer.minimize(gen_loss,var_list=[enc_vars, dec_vars])
     
     sess = tf.Session(config=config)
     enc_saver = tf.train.Saver(var_list=enc_vars)
@@ -101,7 +101,7 @@ def main(args):
 
     sess.run(tf.global_variables_initializer())
 
-    _ = run_model(sess, X, Y, X_, Y_, is_training, disc_val, mean_loss, X_train, Y_train, savers,  
+    _ = run_model(sess, X, Y, X_, Y_, is_training, disc_loss, gen_loss, X_train, Y_train, savers,  
               epochs=args.epochs, batch_size=args.batch_size, print_every=10,
               disc_training=train_discriminator, gen_training=train_generator, 
               plot_losses=False, writer=writer, sum_vars=merged)
