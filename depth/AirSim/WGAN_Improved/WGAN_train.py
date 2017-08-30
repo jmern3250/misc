@@ -48,7 +48,7 @@ def main(args):
 
     critic_loss = tf.reduce_mean(D_x) - tf.reduce_mean(D_y)
 
-    d = tf.gradeients(D_hat, [X_, Y_])
+    d = tf.gradients(D_hat, [X_, Y_])
     # import pdb; pdb.set_trace()
     dx = d[0]
     dy = d[1]
