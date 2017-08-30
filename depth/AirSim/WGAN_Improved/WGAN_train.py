@@ -52,8 +52,11 @@ def main(args):
     # import pdb; pdb.set_trace()
     dx = d[0]
     dy = d[1]
-    gradient_penalty = tf.sqrt(tf.reduce_sum(tf.square(dx),axis=1) + tf.reduce_sum(tf.square(dy),axis=1))
-    gradient_penalty = 10.0*tf.reduce_mean(tf.square(gradient_penalty - 1.0))
+    tf.summary.scalar('dx', tf.reduce_sum(dx))
+    tf.summary.scalar('dy', tf.reduce_sum(dy))
+    gradient_penalty = 0
+    #gradient_penalty = tf.sqrt(tf.reduce_sum(tf.square(dx),axis=1) + tf.reduce_sum(tf.square(dy),axis=1))
+    #gradient_penalty = 10.0*tf.reduce_mean(tf.square(gradient_penalty - 1.0))
     # gradient_penalty = 10.0*tf.reduce_mean((tf.norm(tf.gradients(critic_loss_, X_), ord='euclidean', axis=[1,2])-1)**2)
     
 
