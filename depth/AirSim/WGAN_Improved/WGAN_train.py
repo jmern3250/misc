@@ -33,6 +33,7 @@ def main(args):
         X = tf.placeholder(tf.float32, [None, 245, 437, 3])
         Y = tf.placeholder(tf.float32, [None, 245, 437, 1])
         X_ = tf.placeholder(tf.float32, [None, 245, 437, 3])
+        Y_ = tf.placeholder(tf.float32, [None, 245, 437, 1])
     is_training = tf.placeholder(tf.bool)
     
     with tf.variable_scope('Encoder') as enc: 
@@ -43,11 +44,17 @@ def main(args):
         D_x = discriminator(X, output) #from generated result
     with tf.variable_scope(dis, reuse=True): 
         D_y = discriminator(X, Y)
+        D_hat = discriminator(X_, Y_)
 
-    critic_loss = tf.reduce_mean(D_x) - tf.reduce_mean(D_y) 
-    # grads = tf.gradients(critic_loss, X_)
+    critic_loss = tf.reduce_mean(D_x) - tf.reduce_mean(D_y)
+
+    d = tf.gradeients(D_hat, [X_, Y_])
     # import pdb; pdb.set_trace()
-    gradient_penalty = 10.0*tf.reduce_mean((tf.norm(tf.gradients(critic_loss, X_), ord='euclidean', axis=[1,2])-1)**2)
+    dx = d[0]
+    dy = d[1]
+    gradient_penalty = tf.sqrt(tf.reduce_sum(tf.square(dx),axis=1) + tf.reduce_sum(tf.square(dy),axis=1))
+    gradient_penalty = 10.0*tf.reduce_mean(tf.square(gradient_penalty - 1.0))
+    # gradient_penalty = 10.0*tf.reduce_mean((tf.norm(tf.gradients(critic_loss_, X_), ord='euclidean', axis=[1,2])-1)**2)
     
 
     disc_loss = critic_loss + gradient_penalty  
@@ -94,7 +101,7 @@ def main(args):
 
     sess.run(tf.global_variables_initializer())
 
-    _ = run_model(sess, X, Y, is_training, disc_val, mean_loss, X_train, Y_train, savers,  
+    _ = run_model(sess, X, Y, X_, Y_, is_training, disc_val, mean_loss, X_train, Y_train, savers,  
               epochs=args.epochs, batch_size=args.batch_size, print_every=10,
               disc_training=train_discriminator, gen_training=train_generator, 
               plot_losses=False, writer=writer, sum_vars=merged)
@@ -143,7 +150,7 @@ def load_data(data_idx, num=None):
 
     return X_train, Y_train
 
-def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd, savers, 
+def run_model(session, X, Y, X_, Y_, is_training, disc_val, loss_val, Xd, Yd, savers, 
               epochs=1, batch_size=64, print_every=100,
               disc_training=None, gen_training=None, 
               plot_losses=False, writer=None, sum_vars=None):
@@ -183,6 +190,7 @@ def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd, savers,
                 disc_feed_dict = {X: Xd[disc_idx,:],
                             Y: Yd[disc_idx,:],
                             X_: (Xd[disc_idx,:]+Xd[gen_idx,:])/2.0,
+                            Y_: (Yd[disc_idx,:]+Yd[gen_idx,:])/2.0,
                             is_training: True}
                 if writer is not None:
                     d_loss, _, _ = session.run(disc_variables, feed_dict=disc_feed_dict)
