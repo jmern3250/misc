@@ -48,8 +48,8 @@ def main(args):
     disc_val = -1.0*(tf.reduce_mean(D_y) - tf.reduce_mean(D_x))
     gen_val  = -tf.reduce_mean(D_x)
 
-    trans_loss = 50.0*l1_norm(output-Y)
-    reg_loss = 0.1*TV_loss(output)
+    trans_loss = 100.0*l1_norm(output-Y)
+    reg_loss = 0.0*TV_loss(output)
 
     mean_loss = trans_loss + reg_loss + gen_val 
 
@@ -170,10 +170,10 @@ def run_model(session, X, Y, is_training, disc_val, loss_val, Xd, Yd, clip_weigh
         for i in range(int(math.ceil(Xd.shape[0]/batch_size))):
             # generate indicies for the batch
             gen_start_idx = (i*batch_size)%Xd.shape[0]
-            gen_idx = gen_train_indicies[start_idx:start_idx+batch_size]
+            gen_idx = gen_train_indicies[gen_start_idx:gen_start_idx+batch_size]
             for j in range(n_critic):
                 disc_start_idx = (i*n_critic + j)*batch_size%Xd.shape[0] 
-                disc_idx = disc_train_indicies[start_idx:start_idx+batch_size]
+                disc_idx = disc_train_indicies[disc_start_idx:disc_start_idx+batch_size]
                 disc_feed_dict = {X: Xd[disc_idx,:],
                             Y: Yd[disc_idx,:],
                             is_training: True}
