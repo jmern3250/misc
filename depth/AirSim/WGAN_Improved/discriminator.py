@@ -77,8 +77,7 @@ def discriminator(X, Y):
                         name='c2')
     r0 = d_res_conv2d(c2, 128, [3,3], strides=1, name='r0')
     r1 = d_res_conv2d(r0, 128, [3,3], strides=1, name='r1')
-    r2 = d_res_conv2d(r1, 128, [3,3], strides=1, name='r2')
-    output = tf.layers.conv2d(r2, 1, [3,3], 
+    output = tf.layers.conv2d(r1, 1, [3,3], 
                     strides=1, padding='same',
                     activation=None, name='output')
     return output

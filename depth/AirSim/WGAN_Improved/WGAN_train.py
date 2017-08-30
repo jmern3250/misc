@@ -54,9 +54,9 @@ def main(args):
     dy = d[1]
     tf.summary.scalar('dx', tf.reduce_sum(dx))
     tf.summary.scalar('dy', tf.reduce_sum(dy))
-    gradient_penalty = 0
-    #gradient_penalty = tf.sqrt(tf.reduce_sum(tf.square(dx),axis=1) + tf.reduce_sum(tf.square(dy),axis=1))
-    #gradient_penalty = 10.0*tf.reduce_mean(tf.square(gradient_penalty - 1.0))
+
+    gradient_penalty = tf.sqrt(tf.reduce_sum(tf.square(dx),axis=1) + tf.reduce_sum(tf.square(dy),axis=1)+1)
+    gradient_penalty = 10.0*tf.reduce_mean(tf.square(gradient_penalty - 1.0))
     # gradient_penalty = 10.0*tf.reduce_mean((tf.norm(tf.gradients(critic_loss_, X_), ord='euclidean', axis=[1,2])-1)**2)
     
 
@@ -174,8 +174,8 @@ def run_model(session, X, Y, X_, Y_, is_training, disc_loss, gen_loss, Xd, Yd, s
     gen_variables = [gen_loss, gen_training]
     disc_variables = [disc_loss, disc_training]
     if writer is not None: 
-        # gen_variables.append(sum_vars)
-        disc_variables.append(sum_vars)
+        gen_variables.append(sum_vars)
+        # disc_variables.append(sum_vars)
 
     # counter 
     iter_cnt = 0
@@ -197,14 +197,13 @@ def run_model(session, X, Y, X_, Y_, is_training, disc_loss, gen_loss, Xd, Yd, s
                             X_: Xd[grad_idx,:],
                             Y_: Yd[grad_idx,:],
                             is_training: True}
-                if writer is not None:
-                    d_loss, _, _ = session.run(disc_variables, feed_dict=disc_feed_dict)
-                else:
-                    d_loss, _ = session.run(disc_variables, feed_dict=disc_feed_dict)
+                d_loss, _ = session.run(disc_variables, feed_dict=disc_feed_dict)
             
             # create a feed dictionary for this batch
             gen_feed_dict = {X: Xd[gen_idx,:],
                             Y: Yd[gen_idx,:],
+                            X_: Xd[grad_idx,:],
+                            Y_: Yd[grad_idx,:],
                             is_training: True}
             
             # get batch size
@@ -212,7 +211,10 @@ def run_model(session, X, Y, X_, Y_, is_training, disc_loss, gen_loss, Xd, Yd, s
             
             # have tensorflow compute loss and correct predictions
             # and (if given) perform a training step
-            loss, _ = session.run(gen_variables,feed_dict=gen_feed_dict)
+            if writer is not None: 
+                loss, _, summary = session.run(gen_variables,feed_dict=gen_feed_dict)
+            else:
+                loss, _ = session.run(gen_variables,feed_dict=gen_feed_dict)
             # aggregate performance stats
             losses.append(loss*actual_batch_size)
             
