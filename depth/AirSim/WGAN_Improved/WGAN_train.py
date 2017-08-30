@@ -40,9 +40,9 @@ def main(args):
     with tf.variable_scope('Decoder') as dec:
         output = decoder(latent_y, is_training, args.data)
     with tf.variable_scope('Discriminator') as dis: 
-        D_x = discriminator(X, output, is_training, args.data) #from generated result
+        D_x = discriminator(X, output) #from generated result
     with tf.variable_scope(dis, reuse=True): 
-        D_y = discriminator(X, Y, is_training, args.data)
+        D_y = discriminator(X, Y)
 
     critic_loss = tf.reduce_mean(D_x) - tf.reduce_mean(D_y) 
     gradient_penalty = 10.0*tf.reduce_mean((tf.norm(tf.gradients(critic_loss, X_), ord='euclidean', axis=[1,2,3])-1)**2)
