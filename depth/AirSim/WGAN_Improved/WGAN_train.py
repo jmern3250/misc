@@ -187,10 +187,12 @@ def run_model(session, X, Y, X_, Y_, is_training, disc_val, loss_val, Xd, Yd, sa
             for j in range(n_critic):
                 disc_start_idx = (i*n_critic + j)*batch_size%Xd.shape[0] 
                 disc_idx = disc_train_indicies[disc_start_idx:disc_start_idx+batch_size]
+                grad_start_idx = np.random.randint(0,Xd.shape[0]-batch_size-1)
+                grad_idx = disc_train_indicies[grad_start_idx:grad_start_idx+batch_size]
                 disc_feed_dict = {X: Xd[disc_idx,:],
                             Y: Yd[disc_idx,:],
-                            X_: (Xd[disc_idx,:]+Xd[gen_idx,:])/2.0,
-                            Y_: (Yd[disc_idx,:]+Yd[gen_idx,:])/2.0,
+                            X_: Xd[grad_idx,:],
+                            Y_: Yd[grad_idx,:],
                             is_training: True}
                 if writer is not None:
                     d_loss, _, _ = session.run(disc_variables, feed_dict=disc_feed_dict)
