@@ -98,7 +98,7 @@ def main(args):
               disc_training=train_discriminator, gen_training=train_generator, 
               plot_losses=False, writer=writer, sum_vars=merged)
 
-    model_name = './disc_model/initial_model'
+    model_name = './models/final_model'
     enc_saver.save(sess, model_name+'_enc')
     dec_saver.save(sess, model_name+'_dec')
     disc_saver.save(sess, model_name+'_disc')
