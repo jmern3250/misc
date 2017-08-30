@@ -122,7 +122,7 @@ def load_data(data_idx, num=None):
         Y_train = np.zeros([TRAIN, 245, 437, 1])
 
         i = 0
-        for filename in sorted(glob.glob('./data/AirSim/Scene/*.jpg')): 
+        for filename in sorted(glob.glob('../data/AirSim/Scene/*.jpg')): 
             im=Image.open(filename)
             X_train[i,:,:,:] = (np.array(im)[:,:,:]/255.0*2.0)-1.0
             i += 1
@@ -130,7 +130,7 @@ def load_data(data_idx, num=None):
                 break
 
         i = 0
-        for filename in sorted(glob.glob('./data/AirSim/Depth/*.jpg')): 
+        for filename in sorted(glob.glob('../data/AirSim/Depth/*.jpg')): 
             im=Image.open(filename)
             img_array = np.array(im)
             if img_array.ndim == 3:
