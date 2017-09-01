@@ -219,7 +219,7 @@ def run_model(session, X, Y, X_, Y_, is_training, disc_loss, gen_loss, Xd, Yd, s
             losses.append(loss*actual_batch_size)
             
             #save checkpoint
-            if (e+1 % 10) == 0:
+            if ((e+1) % 10) == 0:
                 enc_saver.save(session, './models/int_model_enc', global_step=e)
                 dec_saver.save(session, './models/int_model_dec', global_step=e)
                 disc_saver.save(session, './models/int_model_disc', global_step=e)
