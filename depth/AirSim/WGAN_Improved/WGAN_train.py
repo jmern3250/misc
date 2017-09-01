@@ -213,6 +213,7 @@ def run_model(session, X, Y, X_, Y_, is_training, disc_loss, gen_loss, Xd, Yd, s
             # and (if given) perform a training step
             if writer is not None: 
                 loss, _, summary = session.run(gen_variables,feed_dict=gen_feed_dict)
+                writer.add_summary(summary, iter_cnt)
             else:
                 loss, _ = session.run(gen_variables,feed_dict=gen_feed_dict)
             # aggregate performance stats
