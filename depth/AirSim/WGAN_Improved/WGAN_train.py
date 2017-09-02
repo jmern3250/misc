@@ -55,25 +55,28 @@ def main(args):
     tf.summary.scalar('dx', tf.reduce_sum(dx))
     tf.summary.scalar('dy', tf.reduce_sum(dy))
 
-    gradient_penalty = tf.sqrt(tf.reduce_sum(tf.square(dx),axis=1) + tf.reduce_sum(tf.square(dy),axis=1)+1)
-    gradient_penalty = 10.0*tf.reduce_mean(tf.square(gradient_penalty - 1.0))
+    # gradient_penalty = tf.sqrt(tf.reduce_sum(tf.square(dx),axis=1) + tf.reduce_sum(tf.square(dy),axis=1)+1)
+    # gradient_penalty = 10.0*tf.reduce_mean(tf.square(gradient_penalty - 1.0))
+
+    grad_penalty = tf.sqrt(tf.reduce_sum(dx**2, axis=[1,2,3]) + tf.reduce_sum(dy**2, axis=[1,2,3]))  
+    grad_penalty = 10.0*tf.reduce_mean((grad_penalty - 1.0)**2)
     # gradient_penalty = 10.0*tf.reduce_mean((tf.norm(tf.gradients(critic_loss_, X_), ord='euclidean', axis=[1,2])-1)**2)
     
 
-    disc_loss = critic_loss + gradient_penalty  
+    disc_loss = critic_loss + grad_penalty  
     
     gen_disc_loss  = -tf.reduce_mean(D_x)
     l1_loss = 100.0*l1_norm(output-Y)
 
     gen_loss = gen_disc_loss + l1_loss
 
-    tf.summary.scalar('disc_loss\critic_loss', critic_loss)
-    tf.summary.scalar('disc_loss\gradient_penalty', gradient_penalty)
-    tf.summary.scalar('disc_loss\disc_loss', disc_loss)
+    tf.summary.scalar('disc_loss.critic_loss', critic_loss)
+    tf.summary.scalar('disc_loss.gradient_penalty', grad_penalty)
+    tf.summary.scalar('disc_loss.disc_loss', disc_loss)
 
-    tf.summary.scalar('gen_loss\disc_loss', gen_disc_loss)
-    tf.summary.scalar('gen_loss\l1_loss', l1_loss)
-    tf.summary.scalar('gen_loss\gen_loss', gen_loss)
+    tf.summary.scalar('gen_loss.disc_loss', gen_disc_loss)
+    tf.summary.scalar('gen_loss.l1_loss', l1_loss)
+    tf.summary.scalar('gen_loss.gen_loss', gen_loss)
     
 
     extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
