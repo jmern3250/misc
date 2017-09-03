@@ -106,11 +106,18 @@ def main(args):
     writer = tf.summary.FileWriter('./tb',sess.graph)
 
     sess.run(tf.global_variables_initializer())
+    if args.chk is not 0: 
+        enc_name = str('int_model_enc-%r' % args.chk)
+        dec_name = str('int_model_dec-%r' % args.chk)
+        disc_name = str('int_model_disc-%r' % args.chk)
+        enc_saver.restore(sess, enc_name)
+        dec_saver.restore(sess, dec_name)
+        disc_saver.restore(sess, disc_name)
 
     _ = run_model(sess, X, Y, X_, Y_, is_training, disc_loss, gen_loss, X_train, Y_train, savers,  
               epochs=args.epochs, batch_size=args.batch_size, print_every=10,
               disc_training=train_discriminator, gen_training=train_generator, 
-              plot_losses=False, writer=writer, sum_vars=merged)
+              start_chk=args.chk, plot_losses=False, writer=writer, sum_vars=merged)
 
     model_name = './models/final_model'
     enc_saver.save(sess, model_name+'_enc')
@@ -159,7 +166,7 @@ def load_data(data_idx, num=None):
 def run_model(session, X, Y, X_, Y_, is_training, disc_loss, gen_loss, Xd, Yd, savers, 
               epochs=1, batch_size=64, print_every=100,
               disc_training=None, gen_training=None, 
-              plot_losses=False, writer=None, sum_vars=None):
+              start_chk=0, plot_losses=False, writer=None, sum_vars=None):
 
     enc_saver, dec_saver, disc_saver = savers
     
@@ -224,9 +231,9 @@ def run_model(session, X, Y, X_, Y_, is_training, disc_loss, gen_loss, Xd, Yd, s
             
             #save checkpoint
             if ((e+1) % 10) == 0:
-                enc_saver.save(session, './models/int_model_enc', global_step=e)
-                dec_saver.save(session, './models/int_model_dec', global_step=e)
-                disc_saver.save(session, './models/int_model_disc', global_step=e)
+                enc_saver.save(session, './models/int_model_enc', global_step=e+start_chk)
+                dec_saver.save(session, './models/int_model_dec', global_step=e+start_chk)
+                disc_saver.save(session, './models/int_model_disc', global_step=e+start_chk)
 
             # print every now and then
             if (iter_cnt % print_every) == 0:
@@ -256,7 +263,7 @@ if __name__ == '__main__':
     parser.add_argument('epochs', type=int)
     parser.add_argument('batch_size', type=int) 
     parser.add_argument('rate', type=float) 
-    # parser.add_argument('lam', type=float) 
+    parser.add_argument('chk', default=0, type=int) 
     parser.add_argument('GPU', type=int) 
     args = parser.parse_args()
     main(args)
