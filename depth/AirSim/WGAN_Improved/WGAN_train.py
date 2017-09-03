@@ -107,9 +107,9 @@ def main(args):
 
     sess.run(tf.global_variables_initializer())
     if args.chk is not 0: 
-        enc_name = str('int_model_enc-%r' % args.chk)
-        dec_name = str('int_model_dec-%r' % args.chk)
-        disc_name = str('int_model_disc-%r' % args.chk)
+        enc_name = str('./models/int_model_enc-%r' % args.chk)
+        dec_name = str('./models/int_model_dec-%r' % args.chk)
+        disc_name = str('./models/int_model_disc-%r' % args.chk)
         enc_saver.restore(sess, enc_name)
         dec_saver.restore(sess, dec_name)
         disc_saver.restore(sess, disc_name)
