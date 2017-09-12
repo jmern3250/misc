@@ -190,15 +190,14 @@ def decoder(feats, is_training, data):
     t2 = bn_conv2d_transpose(t1_, is_training, 16, [5,5], 
                             strides=2, padding='valid',
                             activation='relu', name='t2')
-    c0_ = bn_conv2d_transpose(c0, is_training, 16, [17,17], 
+    c0_ = bn_conv2d_transpose(c0, is_training, 16, [15,15], 
                             strides=2, padding='valid',
                             activation='relu', name='c0_')
     t0_ = tf.concat([t2, c0_], axis=3, name='t2_')
-
     c_out = tf.layers.conv2d(
                             inputs=t0_, 
                             filters=1,
-                            kernel_size=[9,9],
+                            kernel_size=[6,6],
                             strides=1,
                             padding='valid',
                             activation=tf.tanh,
