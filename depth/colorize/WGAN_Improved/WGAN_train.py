@@ -5,6 +5,8 @@ import scipy.io as sio
 import glob 
 import argparse
 
+from data_utils import load_CIFAR10
+
 from model import * 
 from discriminator import discriminator
 
@@ -14,7 +16,9 @@ import math
 import timeit
 
 def main(args):
-    X_train, Y_train = load_data(args.data)
+    X_train, _, _, _, _, _ = get_CIFAR10_data(num_training=20000, num_validation=1000, num_test=1000)
+    Y_train = np.mean(X_train, axis=3).reshape([-1,32,32,1])
+    # X_train, Y_train = load_data(args.data)
     Y_train_ = np.random.shuffle(Y_train)
 
     if args.GPU == 0:
@@ -124,34 +128,6 @@ def main(args):
     dec_saver.save(sess, model_name+'_dec')
     disc_saver.save(sess, model_name+'_disc')
 
-def load_data(data_idx, num=None):
-    if data_idx == 0:
-        mat_contents = sio.loadmat('./data/NYU_data.mat')
-        X_train = mat_contents['images'].transpose([3,0,1,2])/255.0
-        Y_train = mat_contents['depths'].transpose([2,0,1])
-        Y_train = Y_train.reshape([1449,480,640,1])
-        Y_train /= Y_train.max()
-        Y_train -= 1
-        Y_train *= -1.0
-    elif data_idx == 1: 
-        if num is not None: 
-            TRAIN=num
-        else:
-            TRAIN=10000
-
-        X_train = np.zeros([TRAIN, 32, 32, 3])
-        Y_train = np.zeros([TRAIN, 32, 32, 1])
-
-        i = 0
-        for filename in sorted(glob.glob('../data/*.jpg')): 
-            im=Image.open(filename)
-            X_train[i,:,:,:] = (np.array(im)[:,:,:]/255.0*2.0)-1.0
-            Y_train[i,:,:,:] = np.mean(X_train[i,:,:,:],axis=3).reshape([32,32,1])
-            i += 1
-            if i == TRAIN: 
-                break
-
-    return X_train, Y_train
 
 def run_model(session, X, Y, X_, Y_, is_training, disc_loss, gen_loss, Xd, Yd, savers, 
               epochs=1, batch_size=64, print_every=100,
@@ -246,6 +222,35 @@ def l1_norm(X):
 	X = tf.abs(X)
 	norm = tf.reduce_mean(X)
 	return norm 
+
+def get_CIFAR10_data(num_training=49000, num_validation=1000, num_test=10000):
+    """
+    Load the CIFAR-10 dataset from disk and perform preprocessing to prepare
+    it for the two-layer neural net classifier. These are the same steps as
+    we used for the SVM, but condensed to a single function.
+    """
+    # Load the raw CIFAR-10 data
+    cifar10_dir = './datasets/cifar-10-batches-py'
+    X_train, y_train, X_test, y_test = load_CIFAR10(cifar10_dir)
+
+    # Subsample the data
+    mask = range(num_training, num_training + num_validation)
+    X_val = X_train[mask]
+    y_val = y_train[mask]
+    mask = range(num_training)
+    X_train = X_train[mask]
+    y_train = y_train[mask]
+    mask = range(num_test)
+    X_test = X_test[mask]
+    y_test = y_test[mask]
+
+    # Normalize the data: subtract the mean image
+    mean_image = np.mean(X_train, axis=0)
+    X_train -= mean_image
+    X_val -= mean_image
+    X_test -= mean_image
+
+    return X_train, y_train, X_val, y_val, X_test, y_test
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test CNN translation for given arguments')
