@@ -27,13 +27,13 @@ def main(args):
 
     tf.reset_default_graph()
     if args.data == 0:
-        X = tf.placeholder(tf.float32, [None, 480, 640, 3])
-        Y = tf.placeholder(tf.float32, [None, 480, 640, 1])
+        X = tf.placeholder(tf.float32, [None, 32, 32, 3])
+        Y = tf.placeholder(tf.float32, [None, 32, 32, 1])
     elif args.data == 1:
-        X = tf.placeholder(tf.float32, [None, 245, 437, 3])
-        Y = tf.placeholder(tf.float32, [None, 245, 437, 1])
-        X_ = tf.placeholder(tf.float32, [None, 245, 437, 3])
-        Y_ = tf.placeholder(tf.float32, [None, 245, 437, 1])
+        X = tf.placeholder(tf.float32, [None, 32, 32, 3])
+        Y = tf.placeholder(tf.float32, [None, 32, 32, 1])
+        X_ = tf.placeholder(tf.float32, [None, 32, 32, 3])
+        Y_ = tf.placeholder(tf.float32, [None, 32, 32, 1])
     is_training = tf.placeholder(tf.bool)
     
     with tf.variable_scope('Encoder') as enc: 
@@ -137,29 +137,19 @@ def load_data(data_idx, num=None):
         if num is not None: 
             TRAIN=num
         else:
-            TRAIN=1963 
+            TRAIN=10000
 
-        X_train = np.zeros([TRAIN, 245, 437, 3])
-        Y_train = np.zeros([TRAIN, 245, 437, 1])
+        X_train = np.zeros([TRAIN, 32, 32, 3])
+        Y_train = np.zeros([TRAIN, 32, 32, 1])
 
         i = 0
-        for filename in sorted(glob.glob('../data/AirSim/Scene/*.jpg')): 
+        for filename in sorted(glob.glob('../data/*.jpg')): 
             im=Image.open(filename)
             X_train[i,:,:,:] = (np.array(im)[:,:,:]/255.0*2.0)-1.0
+            Y_train[i,:,:,:] = np.mean(X_train[i,:,:,:],axis=3).reshape([32,32,1])
             i += 1
             if i == TRAIN: 
                 break
-
-        i = 0
-        for filename in sorted(glob.glob('../data/AirSim/Depth/*.jpg')): 
-            im=Image.open(filename)
-            img_array = np.array(im)
-            if img_array.ndim == 3:
-                img_array = img_array[:,:,0]
-            Y_train[i,:,:,0] = (img_array[:,:]/255.0*2.0)-1.0
-            i += 1
-            if i == TRAIN:
-                break 
 
     return X_train, Y_train
 
