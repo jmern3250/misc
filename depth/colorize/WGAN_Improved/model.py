@@ -196,7 +196,7 @@ def decoder(feats, is_training, data):
     t0_ = tf.concat([t2, c0_], axis=3, name='t2_')
     c_out = tf.layers.conv2d(
                             inputs=t0_, 
-                            filters=1,
+                            filters=3,
                             kernel_size=[6,6],
                             strides=1,
                             padding='valid',

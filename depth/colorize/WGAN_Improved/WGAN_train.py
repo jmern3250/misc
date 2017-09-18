@@ -17,7 +17,7 @@ import timeit
 
 def main(args):
     Y_train, _, _, _, _, _ = get_CIFAR10_data(num_training=20000, num_validation=1000, num_test=1000)
-    X_train = np.mean(X_train, axis=3).reshape([-1,32,32,1])
+    X_train = np.mean(Y_train, axis=3).reshape([-1,32,32,1])
     # X_train, Y_train = load_data(args.data)
     Y_train_ = np.random.shuffle(Y_train)
 
