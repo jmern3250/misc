@@ -16,8 +16,8 @@ import math
 import timeit
 
 def main(args):
-    X_train, _, _, _, _, _ = get_CIFAR10_data(num_training=20000, num_validation=1000, num_test=1000)
-    Y_train = np.mean(X_train, axis=3).reshape([-1,32,32,1])
+    Y_train, _, _, _, _, _ = get_CIFAR10_data(num_training=20000, num_validation=1000, num_test=1000)
+    X_train = np.mean(X_train, axis=3).reshape([-1,32,32,1])
     # X_train, Y_train = load_data(args.data)
     Y_train_ = np.random.shuffle(Y_train)
 
@@ -30,14 +30,10 @@ def main(args):
         config.gpu_options.allow_growth = False
 
     tf.reset_default_graph()
-    if args.data == 0:
-        X = tf.placeholder(tf.float32, [None, 32, 32, 3])
-        Y = tf.placeholder(tf.float32, [None, 32, 32, 1])
-    elif args.data == 1:
-        X = tf.placeholder(tf.float32, [None, 32, 32, 3])
-        Y = tf.placeholder(tf.float32, [None, 32, 32, 1])
-        X_ = tf.placeholder(tf.float32, [None, 32, 32, 3])
-        Y_ = tf.placeholder(tf.float32, [None, 32, 32, 1])
+    X = tf.placeholder(tf.float32, [None, 32, 32, 1])
+    Y = tf.placeholder(tf.float32, [None, 32, 32, 3])
+    X_ = tf.placeholder(tf.float32, [None, 32, 32, 1])
+    Y_ = tf.placeholder(tf.float32, [None, 32, 32, 3])
     is_training = tf.placeholder(tf.bool)
     
     with tf.variable_scope('Encoder') as enc: 
