@@ -250,7 +250,7 @@ def get_CIFAR10_data(num_training=49000, num_validation=1000, num_test=10000):
     X_val -= mean_image
     X_test -= mean_image
 
-    return X_train, y_train, X_val, y_val, X_test, y_test
+    return X_train, y_train, X_val, y_val, X_test, y_test, mean_image
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test CNN translation for given arguments')
