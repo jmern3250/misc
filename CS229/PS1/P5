@@ -1,0 +1,6 @@
+load quasar_train.csv;
+lambdas = quasar_train(1, :)';
+train_qso = quasar_train(2:end, :);
+load quasar_test.csv;
+test_qso = quasar_test(2:end, :);
+
