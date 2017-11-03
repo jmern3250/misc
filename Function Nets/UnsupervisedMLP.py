@@ -10,23 +10,24 @@ def encoder(X, sizes, bits=8):
 	layers[0] = tf.layers.dense(X, 
 								sizes[0],
 								activation=tf.nn.relu,
-								# use_bias=True
-								use_bias=False
+								use_bias=True
+								# use_bias=False
 								) 
 	for j, size in enumerate(sizes[1:]):
 		i = j+1
 		layers[i] = tf.layers.dense(layers[i-1], 
 								size,
 								activation=tf.nn.relu,
-								# use_bias=True
-								use_bias=False
+								use_bias=True
+								# use_bias=False
 								) 
 
 	binary = tf.layers.dense(layers[len(sizes)-1], 
 									bits,
-                                    activation = tf.tanh,
-                                    # use_bias=True
-                                    use_bias=False
+									# activation=tf.tanh,
+                                    activation = None,
+                                    use_bias=True
+                                    # use_bias=False
                                     ) 
 	return binary 
 
@@ -34,32 +35,10 @@ def decoder(binary):
 	output = tf.layers.dense(binary, 1, activation=None, use_bias=False)
 	return output 
 
-def maxset(B):
-	span = np.ones([0,B])
-	i = 0
-	for row in itertools.product([-1,1], repeat=B):
-		span = np.vstack([span,row])
-		i += 1
-	return span 
-
-def solveB(H, X, W, c, Bmax, nu):
-	def loss(H, X, W, c, b, nu):
-		x_hat = W.T.dot(b) + c
-		loss = np.linalg.norm(X - x_hat)**2 + nu*np.linalg.norm(b - H)**2
-		return loss
-	B = np.zeros([0,Bmax.shape[1]])
-	for i, x in enumerate(X): 
-		Bloss = []
-		for b in Bmax: 
-			bloss = loss(H[i,:],x,W,c,b,nu)
-			Bloss.append(bloss)
-		idx = np.argmin(Bloss)
-		B = np.vstack([B, Bmax[idx]])
-	return B 
 
 SIZES = [512, 512, 512]
 BITS = 8
-N = 30000
+N = 10000
 NU = np.array(1.0).reshape([1,])
 
 # First build the computation graph
@@ -82,7 +61,7 @@ for param in params:
 reg_error *= 1e-2
 
 trans_error = 10.0*(tf.nn.l2_loss(X - x_B) + tf.reduce_sum(tf.abs(X - x_B))) 
-bin_error = 5e-3*tf.nn.l2_loss(1 - binary**2) + tf.reduce_sum(tf.abs(1 - binary**2))
+bin_error = 5e-4*tf.nn.l2_loss(1 - binary**2) + tf.reduce_sum(tf.abs(1 - binary**2))
 # idp_error = tf.nn.l2_loss(tf.reduce_mean(tf.matmul(tf.transpose(binary), binary)) - np.eye(BITS))
 idp_error = 0.0
 bal_error = 2e-5*tf.nn.l2_loss(tf.matmul(binary, np.ones([BITS, 1], dtype=np.float32)))
@@ -110,7 +89,7 @@ writer = tf.summary.FileWriter('./tb',sess.graph)
 
 sess.run(tf.global_variables_initializer())
 
-Xd = np.arange(-1.5, 1.5, 0.005)
+Xd = np.arange(-1.5, 1.5, 0.01)
 Xd = Xd.reshape([-1,1])
 
 i = 0

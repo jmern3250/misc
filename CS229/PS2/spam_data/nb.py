@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import pdb
 
 def readMatrix(file):
@@ -42,6 +43,7 @@ def nb_train(matrix, category):
     phi_1 = (num1 + 1.0)/(den1 + k) 
     phi_0 = (num0 + 1.0)/(den0 + k) 
     phi_y = np.mean(category)
+    pdb.set_trace()
     state['phi_1'] = phi_1
     state['phi_0'] = phi_0
     state['phi_y'] = phi_y
@@ -72,8 +74,8 @@ def nb_test(matrix, state):
         P1 = np.vstack([P1, p1]) 
         P0 = np.vstack([P0, p0]) 
     den = P1[:] + P0[:]
-    P1 /= den
-    P0 /= den
+    # P1 /= den
+    # P0 /= den
     P = np.hstack([P0, P1])
     output = np.argmax(P, axis=1)
     ###################
@@ -81,16 +83,54 @@ def nb_test(matrix, state):
 
 def evaluate(output, label):
     error = (output != label).sum() * 1. / len(output)
-    print 'Error: %1.4f' % error
+    # print 'Error: %1.4f' % error
+    return error
+
+def top_tokens(state, tokenlist, n_top):
+    n = len(tokenlist)
+    # Scores = np.array([n,])
+    phi_1 = state['phi_1']
+    phi_0 = state['phi_0']
+    p1 = np.sum(phi_1, axis=0)
+    p0 = np.sum(phi_0, axis=0) 
+    score = np.log(p1) - np.log(p0)
+    top_list = []
+    for _ in range(n_top):
+        top_idx = np.argmax(score)
+        top_token = tokenlist[top_idx]
+        top_list.append(top_token)
+        score[top_idx] = -np.inf
+    return top_list
 
 def main():
     trainMatrix, tokenlist, trainCategory = readMatrix('MATRIX.TRAIN')
-    testMatrix, tokenlist, testCategory = readMatrix('MATRIX.TEST')
-    # pdb.set_trace()
-    state = nb_train(trainMatrix, trainCategory)
-    output = nb_test(testMatrix, state)
+    # testMatrix, tokenlist, testCategory = readMatrix('MATRIX.TEST')
+    # # pdb.set_trace()
+    # state = nb_train(trainMatrix, trainCategory)
+    # output = nb_test(testMatrix, state)
 
-    evaluate(output, testCategory)
+    # evaluate(output, testCategory)
+
+    # top_list = top_tokens(state, tokenlist, 5)
+    # print(top_list)
+    testMatrix, tokenlist, testCategory = readMatrix('MATRIX.TEST')
+    train_files = ['MATRIX.TRAIN.50','MATRIX.TRAIN.100','MATRIX.TRAIN.200','MATRIX.TRAIN.400','MATRIX.TRAIN.800','MATRIX.TRAIN.1400']
+    Size = [50, 100, 200, 400, 800, 1400]
+    Error = []
+    for f in train_files:
+        trainMatrix, _, trainCategory = readMatrix(f)
+        state = nb_train(trainMatrix, trainCategory)
+        output = nb_test(testMatrix, state)
+        error = evaluate(output, testCategory)
+        Error.append(error)
+
+    pdb.set_trace()
+    plt.figure()
+    plt.plot(Size, Error)
+    plt.title('Test Error vs Training Set Size')
+    plt.xlabel('Set Size')
+    plt.ylabel('Test Error')
+    plt.show()
     return
 
 if __name__ == '__main__':
