@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt 
 
 tau = 8.
 
@@ -72,6 +73,7 @@ def svm_test(matrix, state):
 def evaluate(output, label):
     error = (output != label).sum() * 1. / len(output)
     print 'Error: %1.4f' % error
+    return error
 
 def main():
     trainMatrix, tokenlist, trainCategory = readMatrix('MATRIX.TRAIN.400')
@@ -81,6 +83,24 @@ def main():
     output = svm_test(testMatrix, state)
 
     evaluate(output, testCategory)
+
+    testMatrix, tokenlist, testCategory = readMatrix('MATRIX.TEST')
+    train_files = ['MATRIX.TRAIN.50','MATRIX.TRAIN.100','MATRIX.TRAIN.200','MATRIX.TRAIN.400','MATRIX.TRAIN.800','MATRIX.TRAIN.1400']
+    Size = [50, 100, 200, 400, 800, 1400]
+    Error = []
+    for f in train_files:
+        trainMatrix, _, trainCategory = readMatrix(f)
+        state = svm_train(trainMatrix, trainCategory)
+        output = svm_test(testMatrix, state)
+        error = evaluate(output, testCategory)
+        Error.append(error)
+
+    plt.figure()
+    plt.plot(Size, Error, '-o')
+    plt.title('Test Error vs Training Set Size')
+    plt.xlabel('Set Size')
+    plt.ylabel('Test Error')
+    plt.show()
     return
 
 if __name__ == '__main__':
