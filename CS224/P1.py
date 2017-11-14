@@ -30,6 +30,10 @@ plt.figure()
 plt.plot(N, Ncum,'.')
 plt.plot(N,N)
 plt.grid(True, which='both')
+plt.title('Cumulative Histogram')
+plt.xlabel('Threshold (# people)')
+plt.ylabel('Cumulative Mass (# people)')
+plt.legend(['Histogram', 'X=Y'])
 plt.show()
 
 
