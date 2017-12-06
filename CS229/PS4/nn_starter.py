@@ -16,6 +16,7 @@ def softmax(x):
 	### YOUR CODE HERE
     m = np.amax(x)
     ex = np.exp(x - m)
+
     logs = np.log(ex) - np.log(np.sum(ex, axis=1,keepdims=True))
     s = np.exp(logs)
 	### END YOUR CODE
@@ -75,11 +76,11 @@ def backward_prop(data, labels, params):
     ### YOUR CODE HERE
     h, output, loss = forward_prop(data, labels, params)
     m, n = data.shape
-    dLdy2 = output - labels 
+    dLdy2 = (output - labels)/m 
     dy2dh = W2
     dLdh = dLdy2.dot(dy2dh.T)
-    dhdy1 = (1.0 - h).T.dot(h)
-    dLdy1 = dLdh.dot(dhdy1)
+    dhdy1 = np.multiply((1.0 - h),dot(h))
+    dLdy1 = np.multiply(dLdh,dhdy1)
 
     gradW2 = h.T.dot(dLdy2) 
     gradb2 = np.sum(dLdy2, axis=0)
@@ -89,10 +90,10 @@ def backward_prop(data, labels, params):
     ### END YOUR CODE
 
     grad = {}
-    grad['W1'] = gradW1/m
-    grad['W2'] = gradW2/m
-    grad['b1'] = gradb1/m
-    grad['b2'] = gradb2/m
+    grad['W1'] = gradW1
+    grad['W2'] = gradW2
+    grad['b1'] = gradb1
+    grad['b2'] = gradb2
     # pdb.set_trace()
     return grad
 
