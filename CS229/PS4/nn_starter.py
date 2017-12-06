@@ -14,7 +14,8 @@ def softmax(x):
     Use tricks from previous assignment to avoid overflow
     """
 	### YOUR CODE HERE
-    m = np.amax(x)
+    #m = np.amax(x)
+    m = 0.0
     ex = np.exp(x - m)
     logs = np.log(ex) - np.log(np.sum(ex, axis=1,keepdims=True))
     s = np.exp(logs)
@@ -60,6 +61,7 @@ def forward_prop(data, labels, params):
     y2 = h.dot(W2) + b2 
     y = softmax(y2)
     loss = cxentropy(y, labels)
+    # pdb.set_trace()
     ### END YOUR CODE
     return h, y, loss
 
@@ -75,31 +77,31 @@ def backward_prop(data, labels, params):
     ### YOUR CODE HERE
     h, output, loss = forward_prop(data, labels, params)
     m, n = data.shape
-    dLdy2 = output - labels 
+    dLdy2 = (output - labels)/m 
     dy2dh = W2
     dLdh = dLdy2.dot(dy2dh.T)
     dhdy1 = (1.0 - h).T.dot(h)
     dLdy1 = dLdh.dot(dhdy1)
 
-    gradW2 = h.T.dot(dLdy2) 
-    gradb2 = np.sum(dLdy2, axis=0)
+    gradW2 = h.T.dot(dLdy2)
+    gradb2 = np.sum(dLdy2, axis=0, keepdims=True)
     gradW1 = data.T.dot(dLdy1)
-    gradb1 = np.sum(dLdy1, axis=0)
+    gradb1 = np.sum(dLdy1, axis=0, keepdims=True)
 
     ### END YOUR CODE
 
     grad = {}
-    grad['W1'] = gradW1/m
-    grad['W2'] = gradW2/m
-    grad['b1'] = gradb1/m
-    grad['b2'] = gradb2/m
+    grad['W1'] = gradW1
+    grad['W2'] = gradW2
+    grad['b1'] = gradb1
+    grad['b2'] = gradb2
     # pdb.set_trace()
     return grad
 
 def nn_train(trainData, trainLabels, devData, devLabels):
     (m, n) = trainData.shape
     num_hidden = 300
-    learning_rate = 5
+    learning_rate = 5e-1
     params = {}
 
     ### YOUR CODE HERE
@@ -138,7 +140,7 @@ def nn_train(trainData, trainLabels, devData, devLabels):
         train_loss = np.mean(train_loss)
         dev_loss = np.mean(dev_loss)
         print('Epoch %r done with training loss: %r and development loss: %r' % (e, train_loss, dev_loss))
-        pdb.set_trace()
+        # pdb.set_trace()
         TLoss.append(train_loss)
         DLoss.append(dev_loss)
     # pdb.set_trace()
