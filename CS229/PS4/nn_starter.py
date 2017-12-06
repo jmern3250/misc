@@ -138,7 +138,7 @@ def nn_train(trainData, trainLabels, devData, devLabels):
         train_loss = np.mean(train_loss)
         dev_loss = np.mean(dev_loss)
         print('Epoch %r done with training loss: %r and development loss: %r' % (e, train_loss, dev_loss))
-        # pdb.set_trace()
+        pdb.set_trace()
         TLoss.append(train_loss)
         DLoss.append(dev_loss)
     # pdb.set_trace()
