@@ -8,47 +8,48 @@ import pickle
 import pdb 
 
 IMDB = snap.LoadEdgeList(snap.PUNGraph, './imdb_actor_edges.tsv')
+pdb.set_trace()
 n_IMDB = IMDB.GetNodes()
-# IMDB_nodes = {}
-# for node in IMDB.Nodes(): 
-# 	nid = node.GetId()
-# 	IMDB_nodes[nid] = 0
+IMDB_nodes = {}
+for node in IMDB.Nodes(): 
+	nid = node.GetId()
+	IMDB_nodes[nid] = 0
 
-# BETA = 0.05 
-# DELTA = 0.5
+BETA = 0.05 
+DELTA = 0.5
 
-# IMDB_infected = []
-# for sim in range(100):
-# 	IMDB_nodes = d = dict.fromkeys(IMDB_nodes.keys(), 0)
-# 	patient0 = np.random.choice(IMDB_nodes.keys())
-# 	IMDB_nodes[patient0] = 1
-# 	done = False
-# 	while not done:
-# 		IMDB_nodes_ = IMDB_nodes.copy()
-# 		for node, state in IMDB_nodes.items():
-# 			if state == 1: 
-# 				state_ = np.random.choice([-1,1])
-# 				IMDB_nodes_[node] = state_
-# 		for node in IMDB.Nodes(): 
-# 			nid = node.GetId()
-# 			deg = node.GetDeg()
-# 			state = IMDB_nodes[nid]
-# 			if state == 1:
-# 				for i in range(deg):
-# 					nbr = node.GetNbrNId(i)
-# 					nbr_state = IMDB_nodes[nbr]
-# 					if nbr_state == 0:
-# 						infect = int(np.random.uniform(0.0,1.0) <= BETA)
-# 						IMDB_nodes_[nbr] = infect
+IMDB_infected = []
+for sim in range(100):
+	IMDB_nodes = dict.fromkeys(IMDB_nodes.keys(), 0)
+	patient0 = np.random.choice(IMDB_nodes.keys())
+	IMDB_nodes[patient0] = 1
+	done = False
+	while not done:
+		IMDB_nodes_ = IMDB_nodes.copy()
+		for node, state in IMDB_nodes.items():
+			if state == 1: 
+				state_ = np.random.choice([-1,1])
+				IMDB_nodes_[node] = state_
+		for node in IMDB.Nodes(): 
+			nid = node.GetId()
+			deg = node.GetDeg()
+			state = IMDB_nodes[nid]
+			if state == 1:
+				for i in range(deg):
+					nbr = node.GetNbrNId(i)
+					nbr_state = IMDB_nodes[nbr]
+					if nbr_state == 0:
+						infect = int(np.random.uniform(0.0,1.0) <= BETA)
+						IMDB_nodes_[nbr] = infect
 
-# 		IMDB_nodes = IMDB_nodes_.copy()
-# 		inf_array = np.array([k for k in IMDB_nodes.values()])
-# 		infected = np.sum(inf_array == 1)
-# 		if infected == 0:
-# 			recovered = np.sum(inf_array == -1)
-# 			done = True 
-# 			IMDB_infected.append(float(recovered)/float(n_IMDB))
-# 	print('IMDB Simulation %r done' % (sim+1))
+		IMDB_nodes = IMDB_nodes_.copy()
+		inf_array = np.array([k for k in IMDB_nodes.values()])
+		infected = np.sum(inf_array == 1)
+		if infected == 0:
+			recovered = np.sum(inf_array == -1)
+			done = True 
+			IMDB_infected.append(float(recovered)/float(n_IMDB))
+	print('IMDB Simulation %r done' % (sim+1))
 
 # # # Erdos Renyi Graph
 ER = snap.LoadEdgeList(snap.PUNGraph, './SIR_erdos_renyi.txt')
