@@ -65,5 +65,32 @@ import pdb
 
 GIn = snap.TFIn('./Year1.graph')
 Graph = snap.TNGraph.Load(GIn)
+OutV = snap.TIntPrV()
+snap.GetOutDegCnt(Graph, OutV)
+InV = snap.TIntPrV()
+snap.GetInDegCnt(Graph, InV)
+nOut = len(OutV)
+nIn = len(InV)
+out_count = []
+out_bin = []
+in_count = []
+in_bin = []
+for i in range(nIn):
+    in_bin.append(InV[i].GetVal1())
+    in_count.append(InV[i].GetVal2()) 
+for i in range(nOut):
+    out_bin.append(OutV[i].GetVal1())
+    out_count.append(OutV[i].GetVal2())
 
+print('Maximum SCC Size: %r' % snap.GetMxSccSz(Graph))
+
+plt.figure()
+plt.plot(out_bin, out_count, label='Out Degree')
+plt.plot(in_bin, in_count, label='In Degree')
+plt.title('Final Graph Degree Distribution')
+plt.xlabel('Node Degree')
+plt.ylabel('Node Count')
+plt.legend()
+plt.savefig('./Plots/InNOut.png')
+plt.close()
 import pdb; pdb.set_trace()
