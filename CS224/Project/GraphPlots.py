@@ -65,32 +65,31 @@ import pdb
 
 GIn = snap.TFIn('./Year1.graph')
 Graph = snap.TNGraph.Load(GIn)
-OutV = snap.TIntPrV()
-snap.GetOutDegCnt(Graph, OutV)
-InV = snap.TIntPrV()
-snap.GetInDegCnt(Graph, InV)
-nOut = len(OutV)
-nIn = len(InV)
-out_count = []
-out_bin = []
-in_count = []
-in_bin = []
-for i in range(nIn):
-    in_bin.append(InV[i].GetVal1())
-    in_count.append(InV[i].GetVal2()) 
-for i in range(nOut):
-    out_bin.append(OutV[i].GetVal1())
-    out_count.append(OutV[i].GetVal2())
+
+in_size = []
+out_size = []
+max_node = Graph.GetNodes()-1
+for i in range(100):
+	idx = np.random.randint(0, max_node)
+	tree_out = snap.GetBfsTree(Graph, idx, True, False)
+	tree_in = snap.GetBfsTree(Graph, idx, False, True)
+	out_size.append(tree_out.GetNodes())
+	in_size.append(tree_in.GetNodes())
+in_array = np.sort(in_size)
+out_array = np.sort(out_size)
+idx_array = np.arange(0,1,0.01)
 
 print('Maximum SCC Size: %r' % snap.GetMxSccSz(Graph))
 
 plt.figure()
-plt.plot(out_bin, out_count, label='Out Degree')
-plt.plot(in_bin, in_count, label='In Degree')
-plt.title('Final Graph Degree Distribution')
-plt.xlabel('Node Degree')
-plt.ylabel('Node Count')
+plt.plot(idx_array, in_array, '--', label='In-link Reachability')
+plt.plot(idx_array, out_array, '-.', label='Out-link Reachability')
+plt.title('Final Graph Reachability')
+plt.xlabel('Fraction of Starting Nodes')
+plt.ylabel('Number of Reachable Nodes')
 plt.legend()
-plt.savefig('./Plots/InNOut.png')
+plt.savefig('./Plots/Reach.png')
 plt.close()
+
+
 import pdb; pdb.set_trace()
