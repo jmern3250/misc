@@ -35,7 +35,10 @@ def main(args):
     model_name = './CNN/CNN'
     enc_saver.restore(sess, model_name+'_enc')
 
-    feed_dict = 
+    E = run_model(sess, X, U, S)
+    np.savetxt('Embeddings.csv', E, delimiter=',')
+
+    
 
 def load_data():
     with open('./Pickles/Sdata0.p', 'rb') as f:
@@ -44,9 +47,23 @@ def load_data():
         U = pickle.load(f) 
     return U, S
 
-def run_model(session, X, is_training, loss_val, U, S, 
-              epochs=1, batch_size=1, print_every=100,
-              training=None, plot_losses=False,writer=None, sum_vars=None):
+def run_model(session, X, U, S):
+    m = len(U)
+    E = np.zeros([m, 128])
+    for day in range(m):
+        Xd = np.zeros([1,100000,200,1])
+        u = U[day]
+        s = S[day]
+        m = u.shape[0]
+        s_ = np.tile(s, (m,1))
+        u_ = np.hstack([u, s_]).reshape([1,-1,200,1])
+        Xd[:, :m, :, :] = u_ 
+        feed_dict = {X:Xd}
+        e = session.run(latent_y,feed_dict=feed_dict)
+        E[i,:] = e.squeeze()
+    return E
+
+
         
     
 
