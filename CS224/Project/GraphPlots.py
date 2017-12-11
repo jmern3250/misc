@@ -3,7 +3,7 @@ import pickle
 import snap 
 import os
 from collections import Counter 
-# import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt 
 
 import pdb 
 
@@ -69,25 +69,28 @@ Graph = snap.TNGraph.Load(GIn)
 in_size = []
 out_size = []
 max_node = Graph.GetNodes()-1
-for i in range(100):
-	idx = np.random.randint(0, max_node)
+for i in range(1000):
+	idx = Graph.GetRndNId()
 	tree_out = snap.GetBfsTree(Graph, idx, True, False)
 	tree_in = snap.GetBfsTree(Graph, idx, False, True)
 	out_size.append(tree_out.GetNodes())
 	in_size.append(tree_in.GetNodes())
 in_array = np.sort(in_size)
 out_array = np.sort(out_size)
-idx_array = np.arange(0,1,0.01)
+idx_array = np.arange(0,1,0.001)
 
 print('Maximum SCC Size: %r' % snap.GetMxSccSz(Graph))
 
 plt.figure()
-plt.plot(idx_array, in_array, '--', label='In-link Reachability')
-plt.plot(idx_array, out_array, '-.', label='Out-link Reachability')
+plt.plot(idx_array[100:], in_array[100:], '--', label='In-link Reachability')
+plt.plot(idx_array[100:], out_array[100:], '-.', label='Out-link Reachability')
 plt.title('Final Graph Reachability')
 plt.xlabel('Fraction of Starting Nodes')
 plt.ylabel('Number of Reachable Nodes')
 plt.legend()
+plt.yscale('log')
+plt.xscale('log')
+plt.grid(True)
 plt.savefig('./Plots/Reach.png')
 plt.close()
 
