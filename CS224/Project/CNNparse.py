@@ -6,6 +6,7 @@ from collections import Counter
 import scipy 
 from scipy import sparse 
 from scipy.sparse import linalg 
+import matplotlib.pyplot as plt 
 
 import pdb
 import time
@@ -17,7 +18,7 @@ of the adjacency matrix.
 '''
 
 START = 1293840000 # 1 January, 2011 
-ACTIVE = 15 #Number of days of inactivity before node is removed from graph 
+ACTIVE = 10 #Number of days of inactivity before node is removed from graph 
 
 if os.path.exists('./Pickles/rcvrs.p'):
     with open('./Pickles/rcvrs.p', 'rb') as f:
@@ -85,7 +86,9 @@ n = max(days) + 1
 R = 100 # Target "image" size
 
 # data_set = np.zeros([n, R, R]) # day, sender, recipeient 
-data_set = {}
+# data_set = {}
+U_set = {}
+S_set = {}
 A = set() # Active nodes
 I = set() # Inactive nodes
 E = set() # Edges
@@ -145,23 +148,25 @@ for day, sndrs in sndrs_dict.items():
     dat = (vals, (rows, cols))
 
     M = scipy.sparse.coo_matrix(dat, shape=[m,m],dtype='float64')
-    # test = scipy.sparse.linalg.eigs(M, k=10)
-    # t0 = time.time()
-    U, S, V = scipy.sparse.linalg.svds(M, k=R, tol=1e-3)
-    # t1 = time.time()
-    # length = t1 - t0
+    U, S, V = scipy.sparse.linalg.svds(M, k=R, tol=1e-2)
     # pdb.set_trace()
-    M_ = V.dot(U).dot(np.diag(S)).dot(V).dot(U)
-    # data_set[day,:,:] = M_ 
-    data_set[day] = M_ 
+    U_set[day] = U
+    S_set[day] = S
+    # if day%20 == 0:
+    #     pdb.set_trace()
 
     print('Day %r done with %r nodes in graph' % (day, m))
     if (day+1)%365 == 0:
-        f_name = './Pickles/CNNdata' + str(year) +'.p'
-        with open(f_name, 'wb') as f: 
-            pickle.dump(data_set[year:(1+year)*365], f)
+        U_name = './Pickles/Udata' + str(year) +'.p'
+        with open(U_name, 'wb') as f: 
+            pickle.dump(U_set, f)
+        S_name = './Pickles/Sdata' + str(year) +'.p'
+        with open(S_name, 'wb') as f: 
+            pickle.dump(S_set, f)
         print('Year %r saved' % year)
         year += 1 
+        U_set = {}
+        S_set = {}
 
 
 with open('./Pickles/CNNdata_All.p', 'wb') as f: 
