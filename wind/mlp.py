@@ -21,6 +21,7 @@ class MLP(object):
 
 	def build_graph(self):
 		self.X = tf.placeholder(tf.float32, [None, 4])
+		self.is_training = tf.placeholder(tf.bool)
 		with tf.variable_scope(self.scope, reuse=tf.AUTO_REUSE):
 			h = self.X 
 			for i in range(self.n_layers):
@@ -33,6 +34,14 @@ class MLP(object):
 						    kernel_initializer=tf.contrib.layers.xavier_initializer(),
 						    bias_initializer=tf.zeros_initializer(),
 						    name=name,
+						)
+				h = tf.layers.dropout(
+						    h,
+						    rate=0.10,
+						    noise_shape=None,
+						    seed=None,
+						    training=self.is_training,
+						    name=name+'droput'
 						)
 			self.Y_ = tf.layers.dense(
 						    h,
@@ -81,7 +90,8 @@ class MLP(object):
 				x = Xd[itr_start:itr_end, ...]
 				y = Yd[itr_start:itr_end, ...]
 				feed_dict = {self.X:x,
-							Y:y}
+							Y:y,
+							self.is_training:True}
 				loss, _ = self.session.run(train_vars, feed_dict)
 				losses.append(loss)
 			mean_loss = np.mean(losses)
@@ -94,7 +104,8 @@ class MLP(object):
 		n_samples = Xd.shape[0]
 		for i in range(n_samples):
 			x = Xd[i:i+1, ...]
-			feed_dict = {self.X:x}
+			feed_dict = {self.X:x,
+						 self.is_training:False}
 			y = self.session.run(self.Y_, feed_dict)
 			Y.append(y.squeeze())
 		Y = np.stack(Y)
@@ -123,12 +134,12 @@ if __name__ == '__main__':
 	Xtest = Xd_[(n_samples-100):, ...]
 	Ytest = Yd[(n_samples-100):, ...]
 
-	mlp = MLP(4, 128, lrelu, scope='mlp')
-	mlp.train(Xtrain, Ytrain, 10000, 100, 1e-4, 
+	mlp = MLP(4, 256, lrelu, scope='mlp')
+	mlp.train(Xtrain, Ytrain, 20000, 100, 1e-3, 
 				'./models/model2', checkpoint='./models/model1')
 
-	import pdb; pdb.set_trace()
-	# mlp.restore_graph('./models/model2')
+	# import pdb; pdb.set_trace()
+	# mlp.restore_graph('./models/model1')
 	import matplotlib.pyplot as plt
 	### Training Validation ###
 	y_ = mlp.predict(Xtrain)
@@ -139,6 +150,7 @@ if __name__ == '__main__':
 	Ytrain *= Ystd
 	Ytrain += Ymean
 	plt.plot(Ytrain.squeeze(), '.')
+	plt.grid(True)
 	plt.show()	
 	
 	y_ = mlp.predict(Xtest)
