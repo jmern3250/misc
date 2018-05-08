@@ -89,9 +89,8 @@ class MLP(object):
 		Y = tf.placeholder(tf.float32, [None, 5])
 		L2 = tf.reduce_mean((Y - self.Y_)**2)
 		L1 = tf.reduce_mean(tf.abs(Y - self.Y_))
-		lam = 1.0
-		# loss = lam*L2 + (1. - lam)*L1
-		loss = L2
+		lam = 0.75
+		loss = lam*L2 + (1. - lam)*L1
 		adam = tf.train.AdamOptimizer(learning_rate=learning_rate)
 		train = adam.minimize(loss)
 
@@ -160,6 +159,11 @@ if __name__ == '__main__':
 
 	n_samples = Xd.shape[0]
 
+	# np.random.seed(0)
+
+	# test_idxs = np.random.choice(np.arange(n_samples), size=100, replace=False)
+	# train_idxs = np.delete(np.arange(n_samples))
+
 	Xtrain = Xd_[:(n_samples-100), ...]
 	Mtrain = Md_[:(n_samples-100), ...]
 	Ytrain = Yd_[:(n_samples-100), ...]
@@ -167,12 +171,11 @@ if __name__ == '__main__':
 	Mtest = Md_[(n_samples-100):, ...]
 	Ytest = Yd[(n_samples-100):, ...]
 
-	mlp = MLP(4, 256, lrelu, scope='mlp')
-	# mlp.train(Xtrain, Mtrain, Ytrain, 5000, 100, 1e-4, 
-	# 			'./models_v2/model2', checkpoint='./models_v2/model1')
+	mlp = MLP(5, 256, lrelu, scope='mlp')
+	mlp.train(Xtrain, Mtrain, Ytrain, 5000, 100, 1e-4, 
+				'./models_v2/model1', checkpoint='./models_v2/model0')
 
-	# import pdb; pdb.set_trace()
-	mlp.restore_graph('./models_v2/model1')
+	# mlp.restore_graph('./models_v2/model1')
 	import matplotlib.pyplot as plt
 	### Training Validation ###
 	y_ = mlp.predict(Xtrain, Mtrain)
