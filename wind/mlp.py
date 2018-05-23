@@ -26,7 +26,7 @@ class MLP(object):
 		with tf.variable_scope(self.scope, reuse=tf.AUTO_REUSE):
 			m0 = tf.layers.dense(
 						    self.M,
-						    128,
+						    256,
 						    activation=lrelu,
 						    use_bias=True,
 						    kernel_initializer=tf.contrib.layers.xavier_initializer(),
@@ -35,14 +35,23 @@ class MLP(object):
 						)
 			m1 = tf.layers.dense(
 						    m0,
-						    32,
+						    64,
 						    activation=lrelu,
 						    use_bias=True,
 						    kernel_initializer=tf.contrib.layers.xavier_initializer(),
 						    bias_initializer=tf.zeros_initializer(),
 						    name='m1'
+						)
+			m2 = tf.layers.dense(
+						    m1,
+						    32,
+						    activation=lrelu,
+						    use_bias=True,
+						    kernel_initializer=tf.contrib.layers.xavier_initializer(),
+						    bias_initializer=tf.zeros_initializer(),
+						    name='m2'
 						) 
-			h = tf.concat([m1, self.X], axis=1) 
+			h = tf.concat([m2, self.X], axis=1) 
 			for i in range(self.n_layers):
 				name = 'h' + str(i)
 				h = tf.layers.dense(
@@ -56,7 +65,7 @@ class MLP(object):
 						)
 				h = tf.layers.dropout(
 						    h,
-						    rate=0.25,
+						    rate=0.85,
 						    noise_shape=None,
 						    seed=None,
 						    training=self.is_training,
@@ -159,21 +168,25 @@ if __name__ == '__main__':
 
 	n_samples = Xd.shape[0]
 
-	# np.random.seed(0)
+	# n_test = (n_samples//10)*2
+	n_test = 500
+	print('%r total samples' % n_samples)
+	print('%r test samples' % n_test)
+	np.random.seed(1)
 
-	# test_idxs = np.random.choice(np.arange(n_samples), size=100, replace=False)
-	# train_idxs = np.delete(np.arange(n_samples))
+	test_idxs = np.random.choice(np.arange(n_samples), size=n_test, replace=False)
+	train_idxs = np.delete(np.arange(n_samples), test_idxs)
+	
+	Xtrain = Xd_[train_idxs,...]
+	Mtrain = Md_[train_idxs,...]
+	Ytrain = Yd_[train_idxs,...]
+	Xtest = Xd_[test_idxs,...]
+	Mtest = Md_[test_idxs,...]
+	Ytest = Yd_[test_idxs,...]
 
-	Xtrain = Xd_[:(n_samples-100), ...]
-	Mtrain = Md_[:(n_samples-100), ...]
-	Ytrain = Yd_[:(n_samples-100), ...]
-	Xtest = Xd_[(n_samples-100):, ...]
-	Mtest = Md_[(n_samples-100):, ...]
-	Ytest = Yd[(n_samples-100):, ...]
-
-	mlp = MLP(5, 256, lrelu, scope='mlp')
-	mlp.train(Xtrain, Mtrain, Ytrain, 5000, 100, 1e-4, 
-				'./models_v2/model1', checkpoint='./models_v2/model0')
+	mlp = MLP(6, 256, lrelu, scope='mlp')
+	mlp.train(Xtrain, Mtrain, Ytrain, 2000, 100, 1e-5, 
+				'./models_v2/model3', checkpoint='./models_v2/model2')
 
 	# mlp.restore_graph('./models_v2/model1')
 	import matplotlib.pyplot as plt
@@ -185,6 +198,8 @@ if __name__ == '__main__':
 	plt.figure()
 	Ytrain *= Ystd
 	Ytrain += Ymean
+	MSE = np.linalg.norm(y_[:,0] - Ytrain[:,0])
+	print('Train MSE:', MSE)
 	plt.plot(Ytrain[:,0].squeeze(), '-')
 	plt.plot(y_[:,0].squeeze(), '.')
 	plt.grid(True)
@@ -193,7 +208,8 @@ if __name__ == '__main__':
 	y_ = mlp.predict(Xtest, Mtest)
 	y_ *= Ystd
 	y_ += Ymean
-
+	Ytest *= Ystd
+	Ytest += Ymean
 	MSE = np.linalg.norm(y_[:,0] - Ytest[:,0])
 	print('Test MSE:', MSE)
 	plt.figure()

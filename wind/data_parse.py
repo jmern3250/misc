@@ -43,6 +43,7 @@ for filename in glob.glob('./data/FAST/v2/*.mat'):
 # print('%r datapoints parsed' % n)
 Xmlp = np.concatenate(X)
 Mmlp = np.concatenate(M)
+import pdb; pdb.set_trace()
 Ymlp = np.concatenate(Y)
 
 with open('./data/X2.p', 'wb') as f: 

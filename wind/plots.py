@@ -29,15 +29,25 @@ Yd_ /= Ystd
 
 n_samples = Xd.shape[0]
 
-Xtrain = Xd_[:(n_samples-100), ...]
-Mtrain = Md_[:(n_samples-100), ...]
-Ytrain = Yd_[:(n_samples-100), ...]
-Xtest = Xd_[(n_samples-100):, ...]
-Mtest = Md_[(n_samples-100):, ...]
-Ytest = Yd[(n_samples-100):, ...]
+# n_test = (n_samples//10)*2
+n_test = 500
+print('%r total samples' % n_samples)
+print('%r test samples' % n_test)
+np.random.seed(1)
 
-mlp = MLP(5, 256, lrelu, scope='mlp')
-mlp.restore_graph('./models_v2/model1')
+test_idxs = np.random.choice(np.arange(n_samples), size=n_test, replace=False)
+train_idxs = np.delete(np.arange(n_samples), test_idxs)
+
+Xtrain = Xd_[train_idxs,...]
+Mtrain = Md_[train_idxs,...]
+Ytrain = Yd_[train_idxs,...]
+Xtest = Xd_[test_idxs,...]
+Mtest = Md_[test_idxs,...]
+Ytest = Yd_[test_idxs,...]
+
+
+mlp = MLP(6, 256, lrelu, scope='mlp')
+mlp.restore_graph('./models_v2/model2')
 
 
 names = ['K1', 'K2', 'Keq', 'dVL', 'dVU']
@@ -48,6 +58,7 @@ y_ *= Ystd
 y_ += Ymean
 Ytrain *= Ystd
 Ytrain += Ymean
+MStrain = np.mean(Ytrain**2, axis=0)
 
 ### Plot Ypred vs Y ### 
 
@@ -98,13 +109,19 @@ for i in range(5):
 
 MSE = np.mean(residuals**2, axis=0)
 RMSE = np.sqrt(MSE)
+RStrain = 1. - MSE/MStrain
+
 print('Training MSE:', MSE)
 print('Training RMSE:', RMSE)
+print('Training R-square:', RStrain)
 
 ##### Test Predictions #####
 y_ = mlp.predict(Xtest, Mtest)
 y_ *= Ystd
 y_ += Ymean
+Ytest *= Ystd
+Ytest += Ymean
+MStest = np.mean(Ytest**2, axis=0)
 
 ### Plot Ypred vs Y ### 
 
@@ -145,7 +162,7 @@ for i in range(5):
 	fname = './results/mlp/test/' + 'res_' + names[i] + '.png'
 	plt.figure()
 	plt.plot(residuals[:,i].squeeze(), '.')
-	plt.plot([0,100], [0,0], '-k')
+	plt.plot([0,n_test], [0,0], '-k')
 	plt.grid(True)
 	plt.xlabel('Sample Number')
 	plt.ylabel('Residual Value')
@@ -155,5 +172,8 @@ for i in range(5):
 
 MSE = np.mean(residuals**2, axis=0)
 RMSE = np.sqrt(MSE)
+RStest = 1. - MSE/MStest
+
 print('Testing MSE:', MSE)
 print('Testing RMSE:', RMSE)
+print('Testing R-square:', RStest)
