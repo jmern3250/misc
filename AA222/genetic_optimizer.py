@@ -12,21 +12,25 @@ def eval_pop(population, eval_fcn, eval_fcn_arg_dict=None):
 def selection(population, scores, n_survivors):
 	''' Implements performance weighted selection '''
 	weights = scores/np.sum(scores)
-	survivors = numpy.random.choice(population, size=n_survivors, replace=True, p=weights)
+	n_pop = len(population)
+	idxs = np.random.choice(np.arange(n_pop, dtype=np.int64), size=n_survivors, replace=True, p=weights)
+	survivors = [population[i] for i in idxs]
 	return survivors
 
 def gen_population(survivors, n_population, p_crossover=0.5, mutation_std=0.1):
 	''' Applies crossover and mutation to generate new population'''
-	n_survivors = len(population)
+	n_survivors = len(survivors)
 	if n_survivors >= n_population: 
 		raise ValueError('Population size must exceed number of survivors!')
 	new_pop = survivors 
 	for _ in range(n_population - n_survivors):
 		if np.random.uniform() >= p_crossover:
-			parents = np.random.choice(survivors, size=2)
+			idxs = np.random.choice(np.arange(n_survivors, dtype=np.int64), size=2)
+			parents = [survivors[i] for i in idxs]
 			child = crossover(*parents)
 		else:
-			parent = np.random.choice(survivors, size=1)
+			idx = np.random.choice(np.arange(n_survivors, dtype=np.int64), size=1)
+			parent = survivors[idx[0]]
 			child = mutate(parent)
 		new_pop.append(child)
 	return new_pop
@@ -42,10 +46,11 @@ def mutate(parent, noise_std=0.1):
 def crossover(parent_a, parent_b):
 	''' Cross over on two parents to produce child ''' 
 	child = []
-	for i, layer_a in enumerate(paernt_a):
+	for i, layer_a in enumerate(parent_a):
 		if np.random.uniform(0.0, 1.0) >= 0.5:
 			child.append(layer_a)
 		else:
+			# import pdb; pdb.set_trace()
 			child.append(parent_b[i])
 	return child 
 
@@ -56,6 +61,7 @@ def main(init_population, eval_fcn, eval_fcn_arg_dict=None,
 	mean_scores = []
 	std_scores = []
 	max_scores = []
+	survivors = init_population
 	for i in range(n_itrs):
 		population= gen_population(survivors, n_population=population_size,
 					p_crossover=p_crossover, mutation_std=mutation_std)

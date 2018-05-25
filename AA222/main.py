@@ -3,11 +3,13 @@ import argparse
 import numpy as np 
 import tensorflow as tf 
 import gym 
+import pickle 
 from mpi4py import MPI
 from baselines import logger
 from mlp_policy import MlpPolicy
 from baselines.trpo_mpi import trpo_mpi
 import genetic_optimizer
+import baselines.common.tf_util as U
 
 class MLP(object):
 	def __init__(self, n_layers, layer_sizes, activations, scope='mlp'):
@@ -51,7 +53,7 @@ class MLP(object):
 		self.saver = tf.train.Saver(var_list=var_list)
 
 def train(env, num_timesteps, seed):
-    import baselines.common.tf_util as U
+    
     sess = U.single_threaded_session()
     sess.__enter__()
 
@@ -84,22 +86,25 @@ def extract_stats(sess):
 
 def build_graph(graph_vars):
 	graph = tf.Graph()
+	sess = tf.InteractiveSession(graph=graph)
 	with graph.as_default():
 		mlp = MLP(2, 64, tf.nn.tanh, scope='mlp')
 		var_list = tf.trainable_variables()
 		update_ops = []
 		for i, var in enumerate(var_list):
-			update_ops.append(var.assign(graph_vars[i]))
-		sess = tf.Session()
+			update_ops.append(var.assign(graph_vars[i]))	
 		sess.run(tf.global_variables_initializer())
 		sess.run(update_ops)
-	return graph, mlp.X, mlp.Y, sess
 
-def evaluation(var_list, env, ob_mean=0, ob_std=0, n_episodes=10):
-	graph, X, Y, sess = build_graph(var_list)
+	return graph, mlp.X, mlp.Y, update_ops, sess
 
-	# input_var = graph.get_tensor_by_name('X:0')
-	# output_var = graph.get_operation_by_name('mlp/Y/BiasAdd')
+def evaluation(var_list, env, graph, X, Y, sess, n_episodes=10):
+	update_ops = []
+	with graph.as_default():
+		graph_vars = tf.trainable_variables()
+		for i, var in enumerate(graph_vars):
+			update_ops.append(var.assign(var_list[i]))
+		sess.run(update_ops, feed_dict={})
 	np.random.seed(0)
 	score = 0.
 	for _ in range(n_episodes):
@@ -107,8 +112,6 @@ def evaluation(var_list, env, ob_mean=0, ob_std=0, n_episodes=10):
 		ep_score = 0.
 		done = False
 		while not done: 
-			# observation -= ob_mean
-			# observation /= ob_std
 			observation = observation.reshape([1, -1])
 			with graph.as_default():
 				logits = sess.run(Y, 
@@ -116,23 +119,37 @@ def evaluation(var_list, env, ob_mean=0, ob_std=0, n_episodes=10):
 			action = np.argmax(logits)
 			observation, reward, done, _ = env.step(action)
 			ep_score += reward
-		# print("EPISODE_SCORE: %r" % ep_score)
+
 		score += ep_score
-	sess.close()
 	return score 
 
 def main(args):
+	#### Train policy via TRPO ####
 	env_id = 'CartPole-v0'
 	env = gym.make(env_id)
-	seed = 0
-	var_list, sess = train(env, args.num_timesteps, seed)
-	graph_vars = extract_weights(var_list, sess)
-	ob_mean, ob_std = extract_stats(sess)
-	# ob_mean = ob_std = 0.
-	sess.close()
-	score = evaluation(graph_vars, env, ob_mean, ob_std)
+	# seed = 0
+	# graph_vars, sess = train(env, args.num_timesteps, seed)
+	# vars_list = extract_weights(graph_vars, sess)
+	# with open('./models/SGD/mlp0.p', 'wb') as f: 
+	# 	pickle.dump(vars_list, f)
+	# sess.close()
+	
+	with open('./models/SGD/mlp0.p', 'rb') as f: 
+		vars_list = pickle.load(f)
+	graph, X, Y, _, sess = build_graph(vars_list)
+
+	#### GA Fine Tuning #### 
+	eval_dict = {'env':env, 'n_episodes':10, 'graph':graph, 
+				 'X':X, 'Y':Y, 'sess':sess}
+	results = genetic_optimizer.main([vars_list], evaluation, 
+		eval_fcn_arg_dict=eval_dict,
+		n_itrs=10, population_size=50, n_survivors=5, 
+		p_crossover=0.5, mutation_std=0.1, noise_decay=0.99)
+	with open('./models/GA/results0.p', 'wb') as f: 
+		pickle.dump(results, f)
+
 	print(score)
-	import pdb; pdb.set_trace()
+	# import pdb; pdb.set_trace()
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Train and fine tune MLP')
