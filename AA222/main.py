@@ -4,12 +4,14 @@ import numpy as np
 import tensorflow as tf 
 import gym 
 import pickle 
+from cartpole_stochastic import CartPoleEnvStochastic as CPS
 from mpi4py import MPI
 from baselines import logger
 from mlp_policy import MlpPolicy
 from baselines.trpo_mpi import trpo_mpi
 import genetic_optimizer
 import baselines.common.tf_util as U
+import matplotlib.pyplot as plt 
 
 class MLP(object):
 	def __init__(self, n_layers, layer_sizes, activations, scope='mlp'):
@@ -133,23 +135,76 @@ def main(args):
 	# with open('./models/SGD/mlp0.p', 'wb') as f: 
 	# 	pickle.dump(vars_list, f)
 	# sess.close()
-	
-	with open('./models/SGD/mlp0.p', 'rb') as f: 
-		vars_list = pickle.load(f)
-	graph, X, Y, _, sess = build_graph(vars_list)
 
-	#### GA Fine Tuning #### 
-	eval_dict = {'env':env, 'n_episodes':10, 'graph':graph, 
-				 'X':X, 'Y':Y, 'sess':sess}
-	results = genetic_optimizer.main([vars_list], evaluation, 
-		eval_fcn_arg_dict=eval_dict,
-		n_itrs=10, population_size=50, n_survivors=5, 
-		p_crossover=0.5, mutation_std=0.1, noise_decay=0.99)
-	with open('./models/GA/results0.p', 'wb') as f: 
-		pickle.dump(results, f)
+	#### GA Fine Tuning #### 	
+	# with open('./models/SGD/mlp0.p', 'rb') as f: 
+	# 	vars_list = pickle.load(f)
+	# graph, X, Y, _, sess = build_graph(vars_list)
 
-	print(score)
-	# import pdb; pdb.set_trace()
+	# eval_dict = {'env':env, 'n_episodes':10, 'graph':graph, 
+	# 			 'X':X, 'Y':Y, 'sess':sess}
+	# results = genetic_optimizer.main([vars_list], evaluation, 
+	# 	eval_fcn_arg_dict=eval_dict,
+	# 	n_itrs=10, population_size=50, n_survivors=5, 
+	# 	p_crossover=0.5, mutation_std=0.1, noise_decay=0.99)
+	# with open('./models/GA/results0.p', 'wb') as f: 
+	# 	pickle.dump(results, f)
+
+	# #### Eval SGD ####
+	# with open('./models/SGD/mlp0.p', 'rb') as f: 
+	# 	vars_list = pickle.load(f)
+	# graph, X, Y, _, sess = build_graph(vars_list)
+
+	# env = CPS()
+	# scores = []
+	# for i in range(100):
+	# 	env._seed(i)
+	# 	observation = env.reset()
+	# 	ep_score = 0.
+	# 	done = False
+	# 	while not done: 
+	# 		observation = observation.reshape([1, -1])
+	# 		with graph.as_default():
+	# 			logits = sess.run(Y, 
+	# 				feed_dict={X:observation})
+	# 		action = np.argmax(logits)
+	# 		observation, reward, done, _ = env.step(action)
+	# 		ep_score += reward
+	# 		if not done: 
+	# 			done = ep_score >= 200.
+	# 	scores.append(ep_score)
+
+	#### Eval GA ####
+	with open('./models/GA/results0.p', 'rb') as f: 
+		results = pickle.load(f)
+
+	elite_idx = np.argmax(results['elite_scores'])
+	elite_vars = results['elite_pop'][elite_idx]
+	import pdb; pdb.set_trace()
+	graph, X, Y, _, sess = build_graph(elite_vars)
+
+	env = CPS()
+	scores = []
+	for i in range(100):
+		env._seed(i)
+		observation = env.reset()
+		ep_score = 0.
+		done = False
+		while not done: 
+			observation = observation.reshape([1, -1])
+			with graph.as_default():
+				logits = sess.run(Y, 
+					feed_dict={X:observation})
+			action = np.argmax(logits)
+			observation, reward, done, _ = env.step(action)
+			ep_score += reward
+			if not done: 
+				done = ep_score >= 200.
+		scores.append(ep_score)
+	import pdb; pdb.set_trace()
+
+
+
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Train and fine tune MLP')
