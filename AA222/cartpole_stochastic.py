@@ -52,7 +52,7 @@ class CartPoleEnvStochastic(gym.Env):
         self.polemass_length = (self.masspole * self.length)
         return [seed]
 
-    def _step(self, action):
+    def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
         state = self.state
         x, x_dot, theta, theta_dot = state
@@ -68,10 +68,12 @@ class CartPoleEnvStochastic(gym.Env):
         theta = theta + self.tau * theta_dot
         theta_dot = theta_dot + self.tau * thetaacc
         self.state = (x,x_dot,theta,theta_dot)
+        self.n_steps += 1
         done =  x < -self.x_threshold \
                 or x > self.x_threshold \
                 or theta < -self.theta_threshold_radians \
-                or theta > self.theta_threshold_radians
+                or theta > self.theta_threshold_radians \
+                or self.n_steps >= 200
         done = bool(done)
 
         if not done:
@@ -86,9 +88,13 @@ class CartPoleEnvStochastic(gym.Env):
             self.steps_beyond_done += 1
             reward = 0.0
 
-        return np.array(self.state), reward, done, {}
+        observation = np.array(self.state)
+        # import pdb; pdb.set_trace()
+        observation += self.np_random.normal(loc=0.0, scale=0.05)
+        return observation, reward, done, {}
 
-    def _reset(self):
+    def reset(self):
+        self.n_steps = 0
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
         self.steps_beyond_done = None
         return np.array(self.state)

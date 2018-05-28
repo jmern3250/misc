@@ -11,10 +11,13 @@ def eval_pop(population, eval_fcn, eval_fcn_arg_dict=None):
 
 def selection(population, scores, n_survivors):
 	''' Implements performance weighted selection '''
+	min_score = np.amin(scores)
+	scores -= min_score 
 	weights = scores/np.sum(scores)
 	n_pop = len(population)
 	idxs = np.random.choice(np.arange(n_pop, dtype=np.int64), size=n_survivors, replace=True, p=weights)
 	survivors = [population[i] for i in idxs]
+	# import pdb; pdb.set_trace()
 	return survivors
 
 def gen_population(survivors, n_population, p_crossover=0.5, mutation_std=0.1):
