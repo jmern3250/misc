@@ -186,7 +186,7 @@ def evaluation(var_list, env, graph, X, Y, sess, n_episodes=10):
 	return score 
 
 def main(args):
-	### Train policy via TRPO ####
+	# ## Train policy via TRPO ####
 	# env = MCS()
 	# seed = 0
 	# graph_vars, sess = train(env, args.num_timesteps, seed)
@@ -207,7 +207,7 @@ def main(args):
 	# results = genetic_optimizer.main([vars_list], evaluation, 
 	# 	eval_fcn_arg_dict=eval_dict,
 	# 	n_itrs=10, population_size=30, n_survivors=15, 
-	# 	p_crossover=0.25, mutation_std=0.05, noise_decay=0.9)
+	# 	p_crossover=0.25, mutation_std=0.1, noise_decay=0.9)
 	# with open('./models/mountaincar/GA/results0.p', 'wb') as f: 
 	# 	pickle.dump(results, f)
 
@@ -251,7 +251,6 @@ def main(args):
 	print('Mean score: %r' % np.mean(scores))
 	print('STD score: %r' % np.std(scores))
 	print('SE score: %r' % (np.std(scores)/np.sqrt(500)))
-	import pdb; pdb.set_trace()
 	
 	#### Eval SGD ####
 	with open('./models/mountaincar/SGD/mlp1.p', 'rb') as f: 
