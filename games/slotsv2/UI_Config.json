@@ -1,0 +1,76 @@
+﻿{
+    "output_file": "SlotsConfig.json",
+
+    "openReadMe": {
+        "type": "button",
+        "label": "Open Readme.txt",
+        "tooltip": "Opens the 'Readme.txt' for this script.",
+        "function": "OpenReadMe",
+        "wsevent": "",
+        "group": ""
+    },
+    "command_name": {
+        "type": "textbox",
+        "value": "!slots",
+        "label": "Command",
+        "tooltip": "Name of the Command",
+        "group": ""
+    },
+    "permission_level": {
+        "type": "dropdown",
+        "value": "Everyone",
+        "items": ["Everyone","Regular","Subscriber","Moderator"],
+        "label": "Permission level",
+        "tooltip": "Set the permission level for the command",
+        "group": ""
+    },
+    "usage": {
+        "type": "dropdown",
+        "value": "All",
+        "items": ["Stream Chat","Stream Whisper","Discord Chat","Discord Whisper", "All"],
+        "label": "Usage",
+        "tooltip": "Set the usage type",
+        "group": ""
+    },
+    "max_bet_amount": {
+        "type": "numberbox",
+        "label": "Maximum Bet Amount",
+        "value": 100,
+        "tooltip": "Max bet allowed",
+        "group": ""
+    },
+    "min_bet_amount": {
+        "type": "numberbox",
+        "label": "Minimum Bet Amount",
+        "value": 1,
+        "tooltip": "Min bet allowed",
+        "group": ""
+    },
+    "cooldown_active": {
+        "type": "checkbox",
+        "value": true,
+        "label": "Use Cooldown Messages",
+        "tooltip": "Enable/Disable cooldown messages",
+        "group": "Cooldown"
+    },
+    "cooldown": {
+        "type": "numberbox",
+        "label": "Cooldown (seconds)",
+        "value": 60,
+        "tooltip": "Cooldown in seconds.",
+        "group": "Cooldown"
+    },
+    "cooldown_response": {
+        "type": "textbox",
+        "value": "$user, the command is still on cooldown for $cd seconds!",
+        "label": "Cooldown Response",
+        "tooltip": "The message that the bot will display when the command is on cooldown. \r\n {0} = user \r\n {1} = time remaining",
+        "group": "Cooldown"
+    },
+    "user_cooldown": {
+        "type": "numberbox",
+        "label": "User Cooldown (seconds)",
+        "value": 60,
+        "tooltip": "User cooldown in seconds.",
+        "group": "Cooldown"
+    }

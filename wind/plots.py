@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 
 from mlp import * 
 
-with open('./data/X2.p', 'rb') as f: 
+with open('./data/X3.p', 'rb') as f: 
 	Xd = pickle.load(f)
-with open('./data/M2.p', 'rb') as f: 
+with open('./data/M3.p', 'rb') as f: 
 	Md = pickle.load(f)
-with open('./data/Y2.p', 'rb') as f: 
+with open('./data/Y3.p', 'rb') as f: 
 	Yd = pickle.load(f)
 Xmean = np.mean(Xd, axis=0)
 Xstd = np.std(Xd, axis=0)
@@ -30,7 +30,7 @@ Yd_ /= Ystd
 n_samples = Xd.shape[0]
 
 # n_test = (n_samples//10)*2
-n_test = 500
+n_test = 1000
 print('%r total samples' % n_samples)
 print('%r test samples' % n_test)
 np.random.seed(1)
@@ -47,10 +47,11 @@ Ytest = Yd_[test_idxs,...]
 
 
 mlp = MLP(6, 256, lrelu, scope='mlp')
-mlp.restore_graph('./models_v2/model2')
+mlp.restore_graph('./models_v3/model2')
 
 
-names = ['K1', 'K2', 'Keq', 'dVL', 'dVU']
+# names = ['K1', 'K2', 'Keq', 'dVL', 'dVU']
+names = ['K1', 'Keq', 'dVL', 'dVU', 'K2']
 
 ##### Training Predictions #####
 y_ = mlp.predict(Xtrain, Mtrain)

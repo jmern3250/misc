@@ -20,7 +20,7 @@ class MLP(object):
 		self.session = tf.Session()
 
 	def build_graph(self):
-		self.X = tf.placeholder(tf.float32, [None, 7])
+		self.X = tf.placeholder(tf.float32, [None, 8])
 		self.M = tf.placeholder(tf.float32, [None, 360])
 		self.is_training = tf.placeholder(tf.bool)
 		with tf.variable_scope(self.scope, reuse=tf.AUTO_REUSE):
@@ -144,12 +144,13 @@ class MLP(object):
 		return Y
 
 if __name__ == '__main__':
-	with open('./data/X2.p', 'rb') as f: 
+	with open('./data/X3.p', 'rb') as f: 
 		Xd = pickle.load(f)
-	with open('./data/M2.p', 'rb') as f: 
+	with open('./data/M3.p', 'rb') as f: 
 		Md = pickle.load(f)
-	with open('./data/Y2.p', 'rb') as f: 
+	with open('./data/Y3.p', 'rb') as f: 
 		Yd = pickle.load(f)
+
 	Xmean = np.mean(Xd, axis=0)
 	Xstd = np.std(Xd, axis=0)
 	Mmean = np.mean(Md, axis=0)
@@ -169,7 +170,7 @@ if __name__ == '__main__':
 	n_samples = Xd.shape[0]
 
 	# n_test = (n_samples//10)*2
-	n_test = 500
+	n_test = 1000
 	print('%r total samples' % n_samples)
 	print('%r test samples' % n_test)
 	np.random.seed(1)
@@ -185,8 +186,9 @@ if __name__ == '__main__':
 	Ytest = Yd_[test_idxs,...]
 
 	mlp = MLP(6, 256, lrelu, scope='mlp')
+	''' Xd, Md, Yd, n_epochs, batch_size, learning_rate, filename, checkpoint=None '''
 	mlp.train(Xtrain, Mtrain, Ytrain, 2000, 100, 1e-5, 
-				'./models_v2/model3', checkpoint='./models_v2/model2')
+				'./models_v3/model2', checkpoint='./models_v3/model1')
 
 	# mlp.restore_graph('./models_v2/model1')
 	import matplotlib.pyplot as plt

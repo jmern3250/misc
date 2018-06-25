@@ -223,37 +223,37 @@ def main(args):
 	# with open('./models/mountaincar/SGD/mlp1.p', 'wb') as f: 
 	# 	pickle.dump(vars_list, f)
 
-	#### Eval GA ####
-	with open('./models/mountaincar/GA/results0.p', 'rb') as f: 
-		results = pickle.load(f)
+	# #### Eval GA ####
+	# with open('./models/mountaincar/GA/results0.p', 'rb') as f: 
+	# 	results = pickle.load(f)
 
-	elite_idx = np.argmax(results['elite_scores'])
-	elite_vars = results['elite_pop'][elite_idx]
-	graph, X, Y, _, sess = build_graph(elite_vars)
+	# elite_idx = np.argmax(results['elite_scores'])
+	# elite_vars = results['elite_pop'][elite_idx]
+	# graph, X, Y, _, sess = build_graph(elite_vars)
 
-	env = MCS()
-	scores = []
-	for i in range(500):
-		env.seed(i)
-		observation = env.reset()
-		ep_score = 0.
-		done = False
-		while not done: 
-			observation = observation.reshape([1, -1])
-			with graph.as_default():
-				logits = sess.run(Y, 
-					feed_dict={X:observation})
-			action = np.argmax(logits)
-			observation, reward, done, _ = env.step(action)
-			ep_score += reward
-		scores.append(ep_score)
+	# env = MCS()
+	# scores = []
+	# for i in range(500):
+	# 	env.seed(i)
+	# 	observation = env.reset()
+	# 	ep_score = 0.
+	# 	done = False
+	# 	while not done: 
+	# 		observation = observation.reshape([1, -1])
+	# 		with graph.as_default():
+	# 			logits = sess.run(Y, 
+	# 				feed_dict={X:observation})
+	# 		action = np.argmax(logits)
+	# 		observation, reward, done, _ = env.step(action)
+	# 		ep_score += reward
+	# 	scores.append(ep_score)
 
-	print('Mean score: %r' % np.mean(scores))
-	print('STD score: %r' % np.std(scores))
-	print('SE score: %r' % (np.std(scores)/np.sqrt(500)))
+	# print('Mean score: %r' % np.mean(scores))
+	# print('STD score: %r' % np.std(scores))
+	# print('SE score: %r' % (np.std(scores)/np.sqrt(500)))
 	
 	#### Eval SGD ####
-	with open('./models/mountaincar/SGD/mlp1.p', 'rb') as f: 
+	with open('./models/mountaincar/SGD/mlp0.p', 'rb') as f: 
 		vars_list = pickle.load(f)
 	graph, X, Y, _, sess = build_graph(vars_list)
 

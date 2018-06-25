@@ -27,7 +27,7 @@ def gen_population(survivors, n_population, p_crossover=0.5, mutation_std=0.1):
 		raise ValueError('Population size must exceed number of survivors!')
 	new_pop = survivors 
 	for _ in range(n_population - n_survivors):
-		if np.random.uniform() >= p_crossover:
+		if np.random.uniform() <= p_crossover:
 			idxs = np.random.choice(np.arange(n_survivors, dtype=np.int64), size=2)
 			parents = [survivors[i] for i in idxs]
 			child = crossover(*parents)

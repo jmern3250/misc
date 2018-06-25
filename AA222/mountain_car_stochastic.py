@@ -41,8 +41,8 @@ class MountainCarEnvStochastic(gym.Env):
         assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
 
         position, velocity = self.state
-        mass = 0.001 #+ self.np_random.normal(loc=0., scale=1e-4)
-        grav = -0.0025 #+ self.np_random.normal(loc=0., scale=1e-4)
+        mass = 0.001 + self.np_random.normal(loc=0., scale=1e-4)
+        grav = -0.0025 + self.np_random.normal(loc=0., scale=1e-4)
         velocity += (action-1)*mass + math.cos(3*position)*grav # self.np_random.normal(loc=0., scale=0.01)
         velocity = np.clip(velocity, -self.max_speed, self.max_speed)
         position += velocity
@@ -55,7 +55,7 @@ class MountainCarEnvStochastic(gym.Env):
         reward = -1.0
         
 
-        self.state = (position, velocity) #+ self.np_random.normal(loc=0., scale=0.05, size=[2,])
+        self.state = (position, velocity) + self.np_random.normal(loc=0., scale=0.05, size=[2,])
         return np.array(self.state), reward, done, {}
 
     def reset(self):
