@@ -26,7 +26,6 @@ configFile = "SlotsConfig.json"
 settings = {}
 responses = {}
 game_settings ={}
-emotes = []
 slot1 = ""
 slot2 = ""
 slot3 = ""
@@ -41,43 +40,48 @@ def ScriptToggled(state):
 #	[Required] Intialize Data (Only called on Load)
 #---------------------------------------
 def Init():
-	global responses, settings, configFile, emotes
+	global responses, settings, game_settings, configFile
 
 	path = os.path.dirname(__file__)
-	# try:
-	# 	with codecs.open(os.path.join(path, configFile), encoding='utf-8-sig', mode='r') as file:
-	# 		settings = json.load(file, encoding='utf-8-sig')
-	# except:
-	settings = dict(
-			command_name='!slots',
-			permission_level='Everyone',
-			permission_level_info=None, #XXX
-			usage='All',
-			max_bet_amount=100, #XXX
-			min_bet_amount=1, #XXX
-			cooldown=60,
-			user_cooldown=60,
-			cooldown_response="$user, the command is still on cooldown for $cd seconds!",
-			use_cooldown=True,
-			)
-	responses = dict(
-				pull='$user pulls the lever...',
-				lost='You lost, $user! Better luck next time!',  
-				even='You broke even. Could be worse...',  
-				won='You won $amt $currency $user! Good on you',
-				jackpot='5X Jackpot, $user! You won $amt $currency! Spend it all in one place!',
-				super_jackpot='10X SUPER JACKPOT!!! You won $amt $currency! $user is on top of the world now!',
-				too_high='Bet amount over maximum, you high-roller you...',
-				too_low="Bet amount below minimum - you're better than that",
-				no_cash="Bet exceeds avaiable points! What are you trying to pull???"
+	try:
+		with codecs.open(os.path.join(path, configFile), encoding='utf-8-sig', mode='r') as file:
+			settings = json.load(file, encoding='utf-8-sig')
+			responses = settings 
+			game_settings = settings 
+			multipliers = [1, game_settings['mult_2'], game_settings['mult_3'], game_settings['mult_4'], game_settings['mult_5']]
+			game_settings['multipliers'] = multipliers
+			game_settings['emotes'] = settings['emotes'].replace(' ','').split(',')
+
+	except:
+		settings = dict(
+				command_name='!slots',
+				permission_level='Everyone',
+				permission_level_info=None, 
+				usage='All',
+				max_bet_amount=1e5, 
+				min_bet_amount=10, 
+				cooldown=60,
+				user_cooldown=60,
+				cooldown_response="$user, the command is still on cooldown for $cd seconds!",
+				use_cooldown=True,
 				)
-	game_settings = dict(
-				superemote= 'KappaPride',
-				emotelist=['Kappa', 'LUL', 'NotLikeThis', 'WutFace', 'MingLee'],
-				multipliers=[1,2,3,5,10],
-				houseedge=1.,
-				)
-	emotes.append(game_settings["superemote"])
+		responses = dict(
+					pull='$user pulls the lever...',
+					lost='You lost, $user! Better luck next time!',  
+					even='You broke even. Could be worse...',  
+					won='You won $amt $currency $user! Good on you',
+					jackpot='5X Jackpot, $user! You won $amt $currency! Spend it all in one place!',
+					super_jackpot='10X SUPER JACKPOT!!! You won $amt $currency! $user is on top of the world now!',
+					too_high='Bet amount over maximum, you high-roller you...',
+					too_low="Bet amount below minimum - you're better than that",
+					no_cash="Bet exceeds avaiable points! What are you trying to pull???",
+					no_bet='No bet placed...'
+					)
+		game_settings = dict(
+					emotes=['Kappa', 'LUL', 'NotLikeThis', 'WutFace', 'MingLee'],
+					multipliers=[1,2,3,5,10],
+					houseedge=1.,
+					)
 
 	# responses.extend([settings["rewardTwoSame"], settings["rewardJackpot"], settings["rewardSuperJackpot"]])
 	# try:
@@ -93,61 +97,65 @@ def Init():
 #	[Required] Execute Data / Process Messages
 #---------------------------------------
 def Execute(data):
-	global probs, emotes, settings, userId, username, ScriptName
+	global probs, game_settings, settings, responses, userId, username, ScriptName
 
 	if data.IsChatMessage() and data.GetParam(0).lower() == settings['command_name'] and Parent.HasPermission(data.User, settings['permission_level'], ""):
-		ResponseStr = ""
 		userId = data.User			
 		username = data.UserName
-		bet = None #XXX 
-
-		if bet > > Parent.GetPoints(userId):
-			ResponseStr = respones['no_cash'] 
-		elif bet > settings['max_bet_amount']:
-			ResponseStr = responses['too_high']
-		elif bet < settings['min_bet_amount']:
-			ResponseStr = responses['too_low']
-		# Check if there is a cooldown active 
-		elif settings["cooldown_active"] and (Parent.IsOnCooldown(ScriptName, settings["command_name"]) or Parent.IsOnUserCooldown(ScriptName, settings["command_name"], userId)):
-			if Parent.GetCooldownDuration(ScriptName, settings["command_name"]) > Parent.GetUserCooldownDuration(ScriptName, settings["command_name"], userId):
-				cd = Parent.GetCooldownDuration(ScriptName, settings["command_name"])
-				ResponseStr = settings["cooldown_response"]
-			else:
-				cd = Parent.GetUserCooldownDuration(ScriptName, settings["command"], userId)
-				ResponseStr = settings["cooldown_response"]
-			ResponseStr = ResponseStr.replace("$cd", str(cd))
+		if data.GetParamCount() < 2:
+			ResposneStr = responses['no_bet']
 		else:
-			Parent.RemovePoints(userId, username, bet)
-			logit = random.uniform(0.,1.)
-			logit *= game_settings['houseedge']
-			outcome = 0
-			ResponseStr = responses['lost']
-			response_list = [responses['even'],
-							 responses['won'],
-							 responses['won'],
-							 responses['jackpot'],
-							 responses['super_jackpot']]
-			for i, prob in enumerate(probs):
-				if logit <= prob: 
-					outcome = game_settings['multipliers'][i]
-					ResponseStr = response_list[i]
-			if outcome == 0:
-				slots = []
-				for _ in range(3):
-					slots.append(str(random.choice(game_settings['multipliers'])))
+			bet = data.GetParam(1)
+			if bet > Parent.GetPoints(userId):
+				ResponseStr = respones['no_cash'] 
+			elif bet > settings['max_bet_amount']:
+				ResponseStr = responses['too_high']
+			elif bet < settings['min_bet_amount']:
+				ResponseStr = responses['too_low']
+			# Check if there is a cooldown active 
+			elif settings["cooldown_active"] and (Parent.IsOnCooldown(ScriptName, settings["command_name"]) or Parent.IsOnUserCooldown(ScriptName, settings["command_name"], userId)):
+				if Parent.GetCooldownDuration(ScriptName, settings["command_name"]) > Parent.GetUserCooldownDuration(ScriptName, settings["command_name"], userId):
+					cd = Parent.GetCooldownDuration(ScriptName, settings["command_name"])
+					ResponseStr = settings["cooldown_response"]
+				else:
+					cd = Parent.GetUserCooldownDuration(ScriptName, settings["command"], userId)
+					ResponseStr = settings["cooldown_response"]
+				ResponseStr = ResponseStr.replace("$cd", str(cd))
 			else:
-				slots = [str(outcome)]*3
+				Parent.RemovePoints(userId, username, bet)
+				logit = random.uniform(0.,1.)
+				logit *= game_settings['houseedge']
+				outcome = 0
+				outcome_idx = -1
+				ResponseStr = responses['lost']
+				response_list = [responses['even'],
+								 responses['won'],
+								 responses['won'],
+								 responses['jackpot'],
+								 responses['super_jackpot']]
+				for i, prob in enumerate(probs):
+					if logit <= prob: 
+						outcome = game_settings['multipliers'][i]
+						outcome_idx = i
+						ResponseStr = response_list[i]
 
-			Parent.SendStreamMessage(responses['pull'])
-			for i, slot in enumerate(slots): 
-				string = '|' + slot + 'X|'
-				Parent.SendStreamMessage(string)
-				time.sleep(2.1-i)
-			
-			reward = outcome*bet
-			Parent.AddPoints(userId, username, int(reward))
-			Parent.AddUserCooldown(ScriptName, settings["command_name"], userId, settings["user_cooldown"])
-			Parent.AddCooldown(ScriptName, settings["command_name"], settings["cooldown"])
+				if outcome == 0:
+					slots = []
+					for _ in range(3):
+						slots.append(str(random.choice(game_settings['emotes'])))
+				else:
+					slots = [game_settings['emotes'][outcome_idx]]*3
+
+				Parent.SendStreamMessage(responses['pull'])
+				for i, slot in enumerate(slots): 
+					string = '|' + slot + '|'
+					Parent.SendStreamMessage(string)
+					time.sleep(2.1-i)
+				
+				reward = outcome*bet
+				Parent.AddPoints(userId, username, int(reward))
+				Parent.AddUserCooldown(ScriptName, settings["command_name"], userId, settings["user_cooldown"])
+				Parent.AddCooldown(ScriptName, settings["command_name"], settings["cooldown"])
 
 		ResponseStr = ResponseStr.replace("$amt", reward)
 		ResponseStr = ResponseStr.replace("$user", username)
@@ -160,7 +168,7 @@ def Execute(data):
 # Reload Settings on Save
 #---------------------------------------
 def ReloadSettings(jsonData):
-	global responses, settings, configFile, emotes
+	global responses, settings, game_settings, configFile, probs
 
 	Init()
 

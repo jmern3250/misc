@@ -7,14 +7,14 @@
         "tooltip": "Opens the 'Readme.txt' for this script.",
         "function": "OpenReadMe",
         "wsevent": "",
-        "group": ""
+        "group": "General Settings"
     },
     "command_name": {
         "type": "textbox",
         "value": "!slots",
         "label": "Command",
         "tooltip": "Name of the Command",
-        "group": ""
+        "group": "General Settings"
     },
     "permission_level": {
         "type": "dropdown",
@@ -22,7 +22,7 @@
         "items": ["Everyone","Regular","Subscriber","Moderator"],
         "label": "Permission level",
         "tooltip": "Set the permission level for the command",
-        "group": ""
+        "group": "General Settings"
     },
     "usage": {
         "type": "dropdown",
@@ -30,21 +30,21 @@
         "items": ["Stream Chat","Stream Whisper","Discord Chat","Discord Whisper", "All"],
         "label": "Usage",
         "tooltip": "Set the usage type",
-        "group": ""
+        "group": "General Settings"
     },
     "max_bet_amount": {
         "type": "numberbox",
         "label": "Maximum Bet Amount",
         "value": 100,
         "tooltip": "Max bet allowed",
-        "group": ""
+        "group": "General Settings"
     },
     "min_bet_amount": {
         "type": "numberbox",
         "label": "Minimum Bet Amount",
         "value": 1,
         "tooltip": "Min bet allowed",
-        "group": ""
+        "group": "General Settings"
     },
     "cooldown_active": {
         "type": "checkbox",
@@ -73,4 +73,110 @@
         "value": 60,
         "tooltip": "User cooldown in seconds.",
         "group": "Cooldown"
-    }
+    },
+    "pull": {
+        "type": "textbox",
+        "value": "$user pulls the lever...",
+        "label": "Pull Response",
+        "tooltip": "The message that the bot will display when lever is pulled",
+        "group": "Response Messages"
+    },
+    "lost": {
+        "type": "textbox",
+        "value": "You lost, $user! Better luck next time!",
+        "label": "Loss Response",
+        "tooltip": "The message that the bot will display when the user loses",
+        "group": "Response Messages"
+    },
+    "even": {
+        "type": "textbox",
+        "value": "You broke even. Could be worse...",
+        "label": "Even Response",
+        "tooltip": "The message that the bot will display when the user breaks even",
+        "group": "Response Messages"
+    },
+    "won": {
+        "type": "textbox",
+        "value": "You won $amt $currency $user! Good on you",
+        "label": "Win Response",
+        "tooltip": "The message that the bot will display when the user wins small",
+        "group": "Response Messages"
+    },
+    "jackpot": {
+        "type": "textbox",
+        "value": "5X Jackpot, $user! You won $amt $currency! Don't spend it all in one place!",
+        "label": "Jackpot Response",
+        "tooltip": "The message that the bot will display when the user wins 5X",
+        "group": "Response Messages"
+    },
+    "super_jackpot": {
+        "type": "textbox",
+        "value": "10X SUPER JACKPOT!!! You won $amt $currency! $user is on top of the world now!",
+        "label": "SUPER Jackpot Response",
+        "tooltip": "The message that the bot will display when the user wins 10X",
+        "group": "Response Messages"
+    },
+    "too_high": {
+        "type": "textbox",
+        "value": "Bet amount over maximum, you high-roller you...",
+        "label": "Over maximum bet",
+        "tooltip": "The message that the bot will display when the user bet exceeds the maximum",
+        "group": "Response Messages"
+    },
+    "too_low": {
+        "type": "textbox",
+        "value": "Bet amount below minimum - you're better than that",
+        "label": "Below minimum bet",
+        "tooltip": "The message that the bot will display when the user bet does not meet minimum",
+        "group": "Response Messages"
+    },
+    "no_cash": {
+        "type": "textbox",
+        "value": "Bet exceeds available points! What are you trying to pull???",
+        "label": "Bet exceeds available funds",
+        "tooltip": "The message that the bot will display when the user's poins cannot cover bet amount",
+        "group": "Response Messages"
+    },
+    "no_cash": {
+        "type": "textbox",
+        "value": "No bet placed...",
+        "label": "No bet placed",
+        "tooltip": "The message that the bot will display when the user does not place a bet",
+        "group": "Response Messages"
+    },
+    "emotes": {
+        "type": "textbox",
+        "value": "Kappa,LUL,NotLikeThis,WutFace,MingLee",
+        "label": "Emote list",
+        "tooltip": "List of five (5) emotes for slots, separated by commas (no spaces), in increasing value order",
+        "group": "Game Settings"
+    },
+    "mult_2": {
+        "type": "numberbox",
+        "value": 2,
+        "label": "Multiplier value 2",
+        "tooltip": "Lowest multiplier value (not including 1X)",
+        "group": "Game Settings"
+    },
+    "mult_3": {
+        "type": "numberbox",
+        "value": 3,
+        "label": "Multiplier value 3",
+        "tooltip": "2nd lowest multiplier value (not including 1X)",
+        "group": "Game Settings"
+    },
+    "mult_4": {
+        "type": "numberbox",
+        "value": 5,
+        "label": "Multiplier value 4",
+        "tooltip": "2nd highest multiplier value",
+        "group": "Game Settings"
+    },
+    "mult_5": {
+        "type": "numberbox",
+        "value": 10,
+        "label": "Multiplier value 5",
+        "tooltip": "Highest multiplier value",
+        "group": "Game Settings"
+    },
+}
