@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle as pkl
 from scipy.io import loadmat
+from scipy.special import logsumexp
 
 def plot_histogram(data, title='histogram', xlabel='value', ylabel='frequency', savefile='hist'):
 	'''
@@ -59,7 +60,7 @@ def get_p_x_cond_z1_z2(z1_val, z2_val):
 	given that z1 assumes value z1_val and z2 assumes value z2_val
 	TODO
 	'''
-	pass
+	return bayes_net['cond_likelihood'][(z1_val, z2_val)]
 
 def get_pixels_sampled_from_p_x_joint_z1_z2():
 	'''
@@ -81,11 +82,45 @@ def get_pixels_sampled_from_p_x_joint_z1_z2():
 	x_samples = list(map(lambda x: np.random.binomial(1, x), dists))
 	return x_samples
 
+def p_x_given_z(x, z_vals):
+	dists = bayes_net['cond_likelihood'][z_vals]
+	log_p_z1 = np.log(bayes_net['prior_z1'][z_vals[0]])
+	log_p_z2 = np.log(bayes_net['prior_z2'][z_vals[1]])
+	probs = np.multiply(dists, x) + np.multiply((1. - np.array(dists)), (1 - np.array(x)))
+	log_prob = np.sum(np.log(probs)) + log_p_z1 + log_p_z2
+	return log_prob
+
+def log_p_x(x):
+	probs = list(map(lambda z_vals: p_x_given_z(x, z_vals), z_vals_list))
+	return logsumexp(probs)
+
+def log_p_x_list(x):
+	probs = list(map(lambda z_vals: p_x_given_z(x, z_vals), z_vals_list))
+	return probs
+
 def get_conditional_expectation(data):
 	'''
 	TODO
 	'''
-	pass
+	import itertools
+
+	global z_vals_list 
+	z_vals_list = list(itertools.product(disc_z1, disc_z2))
+	z1_vals_list = np.array([z[0] for z in z_vals_list])
+	z2_vals_list = np.array([z[1] for z in z_vals_list])
+	z_vals_probs = np.array([bayes_net['prior_z1'][z[0]]*bayes_net['prior_z2'][z[1]] for z in z_vals_list])
+	z_log_probs = np.log(z_vals_probs)
+	import multiprocessing
+	pool = multiprocessing.Pool()
+	x_log_probs = np.array(pool.map(log_p_x_list, data.tolist()))
+	pool.close()
+	x_marginal_probs = logsumexp(x_log_probs, axis=1)
+	probs = np.exp(x_log_probs + z_log_probs) #- np.expand_dims(x_marginal_probs, axis=1)
+	etas = 1./np.sum(probs, axis=1, keepdims=True)
+	probs *= etas
+	e_z1 = np.sum(probs*z1_vals_list, axis=1)
+	e_z2 = np.sum(probs*z2_vals_list, axis=1)
+	return e_z1, e_z2
 
 def q4():
 	'''
@@ -134,13 +169,33 @@ def q6():
 	'''
 
 	mat = loadmat('q6.mat')
-	val_data = mat['val_x']
-	test_data = mat['test_x']
+	val_data = mat['val_x']#[:1000]
+	test_data = mat['test_x']#[:1000]
+
 
 	'''
 	TODO
 	'''
+	import itertools
+
+	global z_vals_list 
+	z_vals_list = list(itertools.product(disc_z1, disc_z2))
 	
+	import multiprocessing
+	pool = multiprocessing.Pool()
+	val_log_probs = pool.map(log_p_x, val_data.tolist())
+	test_log_probs = pool.map(log_p_x, test_data.tolist())
+	pool.close()
+
+	mean_log_prob = np.mean(val_log_probs)
+	std_log_prob = np.std(val_log_probs)
+
+	z_score = np.abs(test_log_probs - mean_log_prob)/std_log_prob
+	corrupt_idxs = np.argwhere(z_score >= 3).flatten()
+	true_idxs = np.argwhere(z_score <= 3).flatten()
+
+	real_marginal_log_likelihood = [test_log_probs[i] for i in true_idxs]
+	corrupt_marginal_log_likelihood = [test_log_probs[i] for i in corrupt_idxs]
 	plot_histogram(real_marginal_log_likelihood, title='Histogram of marginal log-likelihood for real data',
 			 xlabel='marginal log-likelihood', savefile='a6_hist_real')
 
@@ -155,11 +210,12 @@ def q7():
 	'''
 
 	mat = loadmat('q7.mat')
-	data = mat['x']
-	labels = mat['y']
+	data = mat['x']#[:100]
+	labels = mat['y']#[:100]
 
 	mean_z1, mean_z2 = get_conditional_expectation(data)
 
+	# import pdb; pdb.set_trace()
 	plt.figure() 
 	plt.scatter(mean_z1, mean_z2, c=labels)
 	plt.colorbar()
