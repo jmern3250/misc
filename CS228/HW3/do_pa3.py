@@ -57,7 +57,9 @@ def applyChannelNoise(y, epsilon):
     ###############################################################################
     # TODO: Your code here!
 
-    raise NotImplementedError()
+    noise = np.random.choice(2, size=y.size, p=(1.-epsilon, epsilon)).reshape(y.shape)
+    yTilde = (y + noise)%2
+
     ###############################################################################
     assert y.shape == yTilde.shape
     return yTilde
@@ -97,13 +99,30 @@ def constructFactorGraph(yTilde, H, epsilon):
     # To do: your code starts here
     # Add unary factors
     for i, var in enumerate(G.var):
-        import pdb; pdb.set_trace()        
+        val = np.array([epsilon, 1. - epsilon] if bool(yTilde[i][0])
+                        else [1. - epsilon, epsilon])
+        factor = Factor(scope=[var], card=[2], val=val, name='Unary' + str(var))
+        G.varToFactor[var].append(i)
+        G.factorToVar[i].append(var)     
 
+    idx = i + 1
     # Add parity factors
     # You may find the function itertools.product useful
     # (https://docs.python.org/2/library/itertools.html#itertools.product)
-
-    import pdb; pdb.set_trace()
+    factors = []
+    for i in range(N):
+        row = H[i,:]
+        scope = np.argwhere(row).squeeze()
+        card = [2 for _ in scope]
+        val = np.zeros(card)
+        for prod in itertools.product([0, 1], repeat=len(scope)):
+            val[prod] = 1 if np.sum(prod)%2 == 0 else 0
+        factors.append(Factor(scope=scope, card=card, val=val, name='Parity' + str(i)))
+        G.factorToVar[idx] = scope
+        for var in scope: 
+            G.varToFactor[var].append(idx)
+        idx += 1
+    G.factors += factors
     ##############################################################
     return G
 
@@ -121,6 +140,9 @@ def do_part_a():
     # To do: your code starts here
     # Design two invalid codewords ytest1, ytest2 and one valid codewords
     # ytest3. Report their weights respectively.
+    ytest1 = np.array([0, 1, 1, 0, 1, 0])
+    ytest2 = np.array([0, 1, 0, 1, 1, 0])
+    ytest3 = np.array([1, 1, 1, 1, 0, 0])
 
     ##############################################################
     print(G.evaluateWeight(ytest1),
@@ -210,10 +232,12 @@ def do_part_ef(error):
 if __name__ == '__main__':
     print('Doing part (a): Should see 0.0, 0.0, >0.0')
     do_part_a()
+    
     print("Doing sanity check applyChannelNoise")
-    # sanity_check_noise()
+    sanity_check_noise()
     print('Doing part (b) fixed')
     # do_part_b(fixed=True, npy_file='part_b_test_1.npy')    # This should perfectly recover original code
+    import pdb; pdb.set_trace()
     # do_part_b(fixed=True, npy_file='part_b_test_2.npy')    # This may not recover at perfect probability
     print('Doing part (b) random')
     # do_part_b(fixed=False)
