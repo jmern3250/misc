@@ -98,14 +98,15 @@ def constructFactorGraph(yTilde, H, epsilon):
     ##############################################################
     # To do: your code starts here
     # Add unary factors
+    idx = 0
     for i, var in enumerate(G.var):
         val = np.array([epsilon, 1. - epsilon] if bool(yTilde[i][0])
                         else [1. - epsilon, epsilon])
         factor = Factor(scope=[var], card=[2], val=val, name='Unary' + str(var))
+        G.factors.append(factor)
         G.varToFactor[var].append(i)
         G.factorToVar[i].append(var)     
-
-    idx = i + 1
+        idx += 1
     # Add parity factors
     # You may find the function itertools.product useful
     # (https://docs.python.org/2/library/itertools.html#itertools.product)
@@ -188,14 +189,41 @@ def do_part_b(fixed=False, npy_file=None):
     if not fixed:
         yTilde = applyChannelNoise(y, epsilon)
         print("Applying random noise at eps={}".format(epsilon))
+        print(np.sum(yTilde)) #17
     else:
         assert npy_file is not None
         yTilde = np.load(npy_file)
         print("Loading yTilde from {}".format(npy_file))
     ##########################################################################################
     # To do: your code starts here
+    graph = constructFactorGraph(yTilde, H, epsilon)
+    for var, factors in enumerate(graph.varToFactor):
+        for factor in factors:
+            graph.getInMessage(var, factor, 'varToFactor')
+    for factor, varbs in enumerate(graph.factorToVar):
+        if len(varbs) == 1:
+            graph.messagesFactorToVar[(factor, varbs[0])]  = graph.factors[factor]
+        else:
+            for i, var in enumerate(varbs):
+                graph.getInMessage(factor, var, 'factorToVar')
+                
 
+    graph.runParallelLoopyBP(50)
+    marginals = []
+    correct = 0
+    for i, val in enumerate(y.squeeze()): 
+        marginal = graph.estimateMarginalProbability(i)
+        correct += np.argmax(marginal) == val
+        marginals.append(marginal[1])
 
+    plt.figure()
+    plt.plot(range(i+1), marginals, '.k')
+    plt.title('Posterior probability bit=1')
+    plt.xlabel('Bit Index')
+    plt.ylabel('Posterior Probability')
+    plt.savefig('./P5bii.png')
+    plt.show()
+    print('Percent Recovery: ', correct/y.size)
     ##############################################################
 
 
@@ -208,9 +236,38 @@ def do_part_cd(numTrials, error, iterations=50):
     G, H = loadLDPC('ldpc36-128.mat')
     ##############################################################
     # To do: your code starts here
+    N = G.shape[1]
+    x = np.zeros((N, 1), dtype='int32')
+    y = encodeMessage(x, G)
+    plt.figure()
+    for _ in range(numTrials):
+        yTilde = applyChannelNoise(y, error)
+        graph = constructFactorGraph(yTilde, H, error)
+        for var, factors in enumerate(graph.varToFactor):
+            for factor in factors:
+                graph.getInMessage(var, factor, 'varToFactor')
+        for factor, varbs in enumerate(graph.factorToVar):
+            if len(varbs) == 1:
+                graph.messagesFactorToVar[(factor, varbs[0])]  = graph.factors[factor]
+            else:
+                for i, var in enumerate(varbs):
+                    graph.getInMessage(factor, var, 'factorToVar')
+        values = []
+        for itr in range(iterations):
+            graph.runParallelLoopyBP(1)
+            if ((itr+1)%10) == 0:
+                print('Iteration %i of %i complete'%(itr+1, iterations))
+            marginals = graph.getMarginalMAP()
+            distance = np.sum(marginals)
+            values.append(distance)
 
+        plt.plot(values)
 
-
+    plt.title('Hamming Distance over LBP Iterations')
+    plt.ylabel('Hamming Distance')
+    plt.xlabel('LBP Iteration')
+    plt.savefig('./P5cd' + str(int(100*error)) + '.png')
+    plt.show()
     ##############################################################
 
 
@@ -223,7 +280,42 @@ def do_part_ef(error):
     ##############################################################
     # To do: your code starts here
     # You should flattern img first and treat it as the message x in the previous parts.
-
+    img_shape = img.shape
+    N = G.shape[1]
+    x = img.reshape((N, 1))
+    y = encodeMessage(x, G)
+    yTilde = applyChannelNoise(y, error)
+    graph = constructFactorGraph(yTilde, H, error)
+    for var, factors in enumerate(graph.varToFactor):
+        for factor in factors:
+            graph.getInMessage(var, factor, 'varToFactor')
+    for factor, varbs in enumerate(graph.factorToVar):
+        if len(varbs) == 1:
+            graph.messagesFactorToVar[(factor, varbs[0])]  = graph.factors[factor]
+        else:
+            for i, var in enumerate(varbs):
+                graph.getInMessage(factor, var, 'factorToVar')
+    plot_iterations = [0, 1, 2, 3, 5, 10, 20, 30]
+    plt.figure()
+    for i in range(30):
+        if i in plot_iterations:
+            marginals = graph.getMarginalMAP()
+            img_out = marginals[:N].reshape(img_shape)
+            idx = plot_iterations.index(i)
+            plt.subplot(2, 4, idx + 1)
+            plt.imshow(img_out)
+            plt.title("Iteration: " + str(i))
+        graph.runParallelLoopyBP(1)
+        print('Iteration %i complete'%(i+1))
+    marginals = graph.getMarginalMAP()
+    img_out = marginals[:N].reshape(img_shape)
+    idx = plot_iterations.index(i+1)
+    plt.subplot(2, 4, idx + 1)
+    plt.imshow(img_out)
+    plt.title("Iteration: " + str(i+1))
+    plt.savefig('./P5ef' + str(int(100*error)) +'.png')
+    plt.show()
+    plt.close()
 
 
     ################################################################
@@ -237,16 +329,15 @@ if __name__ == '__main__':
     sanity_check_noise()
     print('Doing part (b) fixed')
     # do_part_b(fixed=True, npy_file='part_b_test_1.npy')    # This should perfectly recover original code
-    import pdb; pdb.set_trace()
     # do_part_b(fixed=True, npy_file='part_b_test_2.npy')    # This may not recover at perfect probability
     print('Doing part (b) random')
     # do_part_b(fixed=False)
     print('Doing part (c)')
-    #do_part_cd(10, 0.06)
+    # do_part_cd(10, 0.06)
     print('Doing part (d)')
     # do_part_cd(10, 0.08)
     # do_part_cd(10, 0.10)
     print('Doing part (e)')
-    # do_part_ef(0.06)
+    do_part_ef(0.06)
     print('Doing part (f)')
     # do_part_ef(0.10)

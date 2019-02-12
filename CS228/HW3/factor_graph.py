@@ -6,6 +6,7 @@
 
 from factors import *
 import numpy as np
+import copy
 
 class FactorGraph:
     def __init__(self, numVar=0, numFactor=0):
@@ -92,9 +93,33 @@ class FactorGraph:
         '''
         ###############################################################################
         # To do: your code here
+        for itr in range(iterations):
+            priorMessagesVarToFactor = copy.deepcopy(self.messagesVarToFactor)
+            priorMessagesFactorToVar = copy.deepcopy(self.messagesFactorToVar)
+            for var, factors in enumerate(self.varToFactor):
+                for factor in factors:
+                    nu = None
+                    for new_factor in factors:
+                        if new_factor != factor:
+                            if nu is None:
+                                nu = priorMessagesFactorToVar[(new_factor, var)]
+                            else:
+                                nu = nu.multiply(
+                                    priorMessagesFactorToVar[(new_factor, var)])
+                    self.messagesVarToFactor[(var, factor)] = nu.normalize()
 
-
-        raise NotImplementedError()
+            # Update the message factor -> var
+            for factor, variables in enumerate(self.factorToVar):
+                for var in variables:
+                    res = self.factors[factor]
+                    for new_var in variables:
+                        if new_var != var:
+                            res = res.multiply(
+                                priorMessagesVarToFactor[(new_var, factor)])
+                    res = res.marginalize_all_but([var])
+                    self.messagesFactorToVar[(factor, var)] = res.normalize()
+            if ((itr+1)%10) == 0:
+                print('Iteration %i of %i complete'%(itr+1, iterations))
         ###############################################################################
 
 
@@ -121,7 +146,14 @@ class FactorGraph:
         ###############################################################################
         # To do: your code here
 
-        raise NotImplementedError()
+        psi = None
+        for factor in self.varToFactor[var]:
+            if psi is None:
+                psi = self.messagesFactorToVar[(factor, var)]
+            else:
+                psi = psi.multiply(self.messagesFactorToVar[(factor, var)])
+        psi = psi.normalize()
+        return psi.val
         ###############################################################################
 
 
@@ -139,7 +171,8 @@ class FactorGraph:
         output = np.zeros(len(self.var))
         ###############################################################################
         # To do: your code here
-
+        for i in self.var:
+            output[i] = np.argmax(self.estimateMarginalProbability(i))
 
         ###############################################################################
         return output
