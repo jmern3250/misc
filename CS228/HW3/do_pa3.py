@@ -196,18 +196,7 @@ def do_part_b(fixed=False, npy_file=None):
         print("Loading yTilde from {}".format(npy_file))
     ##########################################################################################
     # To do: your code starts here
-    graph = constructFactorGraph(yTilde, H, epsilon)
-    for var, factors in enumerate(graph.varToFactor):
-        for factor in factors:
-            graph.getInMessage(var, factor, 'varToFactor')
-    for factor, varbs in enumerate(graph.factorToVar):
-        if len(varbs) == 1:
-            graph.messagesFactorToVar[(factor, varbs[0])]  = graph.factors[factor]
-        else:
-            for i, var in enumerate(varbs):
-                graph.getInMessage(factor, var, 'factorToVar')
-                
-
+    graph = constructFactorGraph(yTilde, H, epsilon)              
     graph.runParallelLoopyBP(50)
     marginals = []
     correct = 0
@@ -331,13 +320,13 @@ if __name__ == '__main__':
     # do_part_b(fixed=True, npy_file='part_b_test_1.npy')    # This should perfectly recover original code
     # do_part_b(fixed=True, npy_file='part_b_test_2.npy')    # This may not recover at perfect probability
     print('Doing part (b) random')
-    # do_part_b(fixed=False)
+    do_part_b(fixed=False)
     print('Doing part (c)')
-    # do_part_cd(10, 0.06)
+    do_part_cd(10, 0.06)
     print('Doing part (d)')
-    # do_part_cd(10, 0.08)
-    # do_part_cd(10, 0.10)
+    do_part_cd(10, 0.08)
+    do_part_cd(10, 0.10)
     print('Doing part (e)')
     do_part_ef(0.06)
     print('Doing part (f)')
-    # do_part_ef(0.10)
+    do_part_ef(0.10)

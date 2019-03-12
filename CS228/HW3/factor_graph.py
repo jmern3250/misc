@@ -93,6 +93,15 @@ class FactorGraph:
         '''
         ###############################################################################
         # To do: your code here
+        for var, factors in enumerate(self.varToFactor):
+            for factor in factors:
+                self.getInMessage(var, factor, 'varToFactor')
+        for factor, varbs in enumerate(self.factorToVar):
+            if len(varbs) == 1:
+                self.messagesFactorToVar[(factor, varbs[0])] = self.factors[factor]
+            else:
+                for i, var in enumerate(varbs):
+                    self.getInMessage(factor, var, 'factorToVar')
         for itr in range(iterations):
             priorMessagesVarToFactor = copy.deepcopy(self.messagesVarToFactor)
             priorMessagesFactorToVar = copy.deepcopy(self.messagesFactorToVar)
