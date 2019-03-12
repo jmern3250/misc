@@ -327,6 +327,6 @@ if __name__ == '__main__':
     do_part_cd(10, 0.08)
     do_part_cd(10, 0.10)
     print('Doing part (e)')
-    do_part_ef(0.06)
+    # do_part_ef(0.06)
     print('Doing part (f)')
     do_part_ef(0.10)
