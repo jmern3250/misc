@@ -54,14 +54,9 @@ def em_update(X, params):
 
     Note: You will most likely need to use the function estimate_z_prob_given_x
     """
-    pi = 0.
-    mu0 = 0.
-    mu1 = 0.
-    sigma0 = 0.
-    sigma1 = 0.
     z_prob = estimate_z_prob_given_x(X, params)
-    import pdb; pdb.set_trace()
-    params = {'pi': pi, 'mu0': mu0, 'mu1': mu1, 'sigma0': sigma0, 'sigma1': sigma1}
+    Z_estimated = np.round(z_prob)
+    params = estimate_params(X, Z_estimated)
     return params
 
 
@@ -94,6 +89,14 @@ def compute_log_likelihood(X, params):
     Note: You will most likely need to use the function estimate_z_prob_given_x
     """
     likelihood = 0.0
+    m, n = X.shape[:2]
+    # import pdb; pdb.set_trace()
+    # print()
+    for i in range(m):
+        for j in range(n):
+            prob = multivariate_normal.pdf(X[i,j], mean=params['mu1'], cov=params['sigma1'])*params['pi']
+            prob += multivariate_normal.pdf(X[i,j], mean=params['mu0'], cov=params['sigma0'])*(1-params['pi'])
+            likelihood += np.log(prob)
     return likelihood
 
 
