@@ -7,6 +7,7 @@ Author: Shengjia Zhao (sjzhao@stanford.edu)
 
 from utils import *
 import numpy as np
+from scipy.stats import multivariate_normal
 import math
 
 
@@ -21,8 +22,10 @@ def estimate_phi_lambda(Z):
 
     This function will be autograded.
     """
-    MLE_phi = 0.0
-    MLE_lambda = 0.0
+    m, n = Z.shape
+    Y = np.round(np.sum(Z,axis=1,keepdims=True)/n)
+    MLE_phi = np.sum(Y)/m
+    MLE_lambda = np.sum(Y == Z)/(m*n)
     return {'phi': MLE_phi, 'lambda': MLE_lambda}
 
 
@@ -46,8 +49,35 @@ def compute_yz_marginal(X, params):
     You should use the log-sum-exp trick to avoid numerical overflow issues (Helper functions in utils.py)
     This function will be autograded.
     """
-    y_prob = 0.0
-    z_prob = 0.0
+    m, n, c = X.shape
+    y_list = []
+    for i in range(m):
+        log_sum_1 = 0
+        log_sum_0 = 0
+        for j in range(n):
+            z0_0 = multivariate_normal.logpdf(X[i,j], mean=params['mu0'], cov=params['sigma0']) + np.log(params['lambda'])
+            z1_0 = multivariate_normal.logpdf(X[i,j], mean=params['mu1'], cov=params['sigma1']) + np.log(1. - params['lambda'])
+            log_sum_0 += log_sum_exp(z0_0, z1_0)
+            z0_1 = multivariate_normal.logpdf(X[i,j], mean=params['mu0'], cov=params['sigma0']) + np.log(1. - params['lambda'])
+            z1_1 = multivariate_normal.logpdf(X[i,j], mean=params['mu1'], cov=params['sigma1']) + np.log(params['lambda'])
+            log_sum_1 += log_sum_exp(z0_1, z1_1)
+        p_y_1 = log_sum_1 + np.log(params['phi'])
+        p_y_0 = log_sum_0 + np.log(1 - params['phi'])
+
+        p_y = p_y_1 - np.logaddexp(p_y_0, p_y_1)
+        y_list.append(p_y)
+    y_prob = np.array(y_list)
+    # import pdb;pdb.set_trace()
+    z_prob = np.zeros_like(X)
+    for i in range(m):
+        for j in range(n):
+            numerator = y_prob[i]*params['lambda']*multivariate_normal.pdf(X[i,j], mean=params['mu1'], cov=params['sigma1'])
+            numerator += (1.-y_prob[i])*(1.-params['lambda'])*multivariate_normal.pdf(X[i,j], mean=params['mu1'], cov=params['sigma1'])
+            denominator = y_prob[i]*(1.-params['lambda'])*multivariate_normal.pdf(X[i,j], mean=params['mu0'], cov=params['sigma0'])
+            denominator += (1.-y_prob[i])*params['lambda']*multivariate_normal.pdf(X[i,j], mean=params['mu0'], cov=params['sigma0'])
+            denominator += numerator
+            z_prob[i,j] = np.log(numerator) - np.log(denominator)
+    
     return y_prob, z_prob
 
 

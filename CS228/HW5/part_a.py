@@ -37,8 +37,9 @@ def estimate_params(X, Z):
     X1 = np.array([X[idx[0], idx[1], :] for idx in idxs1.tolist()])
     mu0 = np.mean(X0, axis=0)
     mu1 = np.mean(X1, axis=0)
-    sigma0 = np.cov(X0.transpose())
-    sigma1 = np.cov(X1.transpose())
+    sigma0 = np.cov(X0,rowvar=False, bias=True)
+    sigma1 = np.cov(X1,rowvar=False, bias=True)
+    # import pdb; pdb.set_trace()
     return {'pi': pi, 'mu0': mu0, 'mu1': mu1, 'sigma0': sigma0, 'sigma1': sigma1}
 
 
@@ -72,7 +73,7 @@ def estimate_z_prob_given_x(X, params):
     This function will be autograded.
     """
     numerator = multivariate_normal.pdf(X, mean=params['mu1'], cov=params['sigma1'])*params['pi']
-    denominator = multivariate_normal.pdf(X, mean=params['mu1'], cov=params['sigma1'])+multivariate_normal.pdf(X, mean=params['mu0'], cov=params['sigma0'])
+    denominator = multivariate_normal.pdf(X, mean=params['mu1'], cov=params['sigma1'])*params['pi']+multivariate_normal.pdf(X, mean=params['mu0'], cov=params['sigma0'])*(1.-params['pi'])
     z_prob = numerator/denominator
     return z_prob
 
@@ -122,6 +123,7 @@ if __name__ == '__main__':
     # pt a.ii
 
     # params = estimate_params(X_labeled, Z_labeled)  # Initialize
+    ##### MLE Initialization #####
     likelihoods = []
     while True:
         likelihoods.append(compute_log_likelihood(X_unlabeled, params))
@@ -132,6 +134,42 @@ if __name__ == '__main__':
     colorprint("MLE estimates for PA part a.ii:", "teal")
     colorprint("\tpi: %s\n\tmu_0: %s\n\tmu_1: %s\n\tsigma_0: %s\n\tsigma_1: %s"
         %(params['pi'], params['mu0'], params['mu1'], params['sigma0'], params['sigma1']), "red")
+
+    plt.plot(likelihoods)
+    ##### Random Initialization #####
+    params['pi'] = np.random.uniform()
+    params['mu0'] = np.random.normal(size=2)
+    params['mu1'] = np.random.normal(size=2)
+    params['sigma0'] = np.eye(2)
+    params['sigma1'] = np.eye(2)
+    likelihoods = []
+    while True:
+        likelihoods.append(compute_log_likelihood(X_unlabeled, params))
+        if len(likelihoods) > 2 and likelihoods[-1] - likelihoods[-2] < 0.01:
+            break
+        params = em_update(X_unlabeled, params)
+
+    # colorprint("MLE estimates for PA part a.ii:", "teal")
+    # colorprint("\tpi: %s\n\tmu_0: %s\n\tmu_1: %s\n\tsigma_0: %s\n\tsigma_1: %s"
+    #     %(params['pi'], params['mu0'], params['mu1'], params['sigma0'], params['sigma1']), "red")
+
+    plt.plot(likelihoods)
+    ##### Zero Initialization #####
+    params['pi'] = 0.5
+    params['mu0'] = -np.array((1.,1.))*0.5
+    params['mu1'] = np.array((1.,1.))*0.5
+    params['sigma0'] = np.eye(2)
+    params['sigma1'] = np.eye(2)
+    likelihoods = []
+    while True:
+        likelihoods.append(compute_log_likelihood(X_unlabeled, params))
+        if len(likelihoods) > 2 and likelihoods[-1] - likelihoods[-2] < 0.01:
+            break
+        params = em_update(X_unlabeled, params)
+
+    # colorprint("MLE estimates for PA part a.ii:", "teal")
+    # colorprint("\tpi: %s\n\tmu_0: %s\n\tmu_1: %s\n\tsigma_0: %s\n\tsigma_1: %s"
+    #     %(params['pi'], params['mu0'], params['mu1'], params['sigma0'], params['sigma1']), "red")
 
     plt.plot(likelihoods)
     plt.show()
