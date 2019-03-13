@@ -65,8 +65,16 @@ def p_x(x, params):
     p_x_1 = p_x_z(x, 1, params) + p_z(1, params) 
     return log_sum_exp(p_x_0, p_x_1)
 
-def num(x, z, y, params):
-    p_y(y) + p_x_z(x, z, params) + p_z_y(z, y, params)
+def z_y_fun(z, y, X, i, j, params):
+    value = 0. 
+    for k in range(n):
+        if k != j:
+            x = X[i,k]
+            z_0 = p_x_z(x, 0, params) + p_z_y(0, y, params)
+            z_1 = p_x_z(x, 1, params) + p_z_y(1, y, params)
+            value += log_sum_exp(z_0, z_1)
+    value += p_y(y, params) + p_x_z(x, z, params) + p_z_y(z, y, params)
+    return value
 
 def compute_yz_marginal(X, params):
     """Evaluate log p(y_i=1|X) and log p(z_{ij}=1|X)
@@ -106,8 +114,12 @@ def compute_yz_marginal(X, params):
     for i in range(m):
         for j in range(n):
             x = X[i,j]
-            z_1 = p_x_z(x, 1, params) + p_z(1, params)
-            z_0 = p_x_z(x, 0, params) + p_z(0, params)
+            z_1_y_1 = z_y_fun(1, 1, X, i, j, params)
+            z_1_y_0 = z_y_fun(1, 0, X, i, j, params)
+            z_0_y_1 = z_y_fun(0, 1, X, i, j, params)
+            z_0_y_0 = z_y_fun(0, 0, X, i, j, params)
+            z_1 = log_sum_exp(z_1_y_1, z_1_y_0)
+            z_0 = log_sum_exp(z_0_y_1, z_0_y_0)
             z_prob[i,j] = z_1 - log_sum_exp(z_0, z_1) 
        
     return y_prob, z_prob
