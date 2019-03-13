@@ -28,6 +28,45 @@ def estimate_phi_lambda(Z):
     MLE_lambda = np.sum(Y == Z)/(m*n)
     return {'phi': MLE_phi, 'lambda': MLE_lambda}
 
+def p_x_z(x, z, params):
+    ''' log P(x|z)'''
+    if z == 0: 
+        return multivariate_normal.logpdf(x, mean=params['mu0'], cov=params['sigma0'])
+    elif z == 1:
+        return multivariate_normal.logpdf(x, mean=params['mu1'], cov=params['sigma1'])
+
+def p_x_y(x, y, params):
+    ''' log P(x|y) '''
+    p_x_0 = p_x_z(x, 0, params) + p_z_y(0, y, params)
+    p_x_1 = p_x_z(x, 1, params) + p_z_y(1, y, params)
+    return log_sum_exp(p_x_0, p_x_1) 
+
+def p_z_y(z, y, params):
+    ''' log P(z|y) '''
+    if z == y: 
+        return np.log(params['lambda'])
+    else:
+        return np.log(1. - params['lambda'])
+
+def p_y(y, params):
+    if y == 1.:
+        return np.log(params['phi'])
+    else:
+        return np.log(1. - params['phi'])
+
+def p_z(z, params):
+    p_z_0 = p_z_y(z, 0, params) + p_y(0, params)
+    p_z_1 = p_z_y(z, 1, params) + p_y(1, params)
+    return log_sum_exp(p_z_0, p_z_1)
+
+def p_x(x, params):
+    ''' log P(x) '''
+    p_x_0 = p_x_z(x, 0, params) + p_z(0, params) 
+    p_x_1 = p_x_z(x, 1, params) + p_z(1, params) 
+    return log_sum_exp(p_x_0, p_x_1)
+
+def num(x, z, y, params):
+    p_y(y) + p_x_z(x, z, params) + p_z_y(z, y, params)
 
 def compute_yz_marginal(X, params):
     """Evaluate log p(y_i=1|X) and log p(z_{ij}=1|X)
@@ -50,34 +89,27 @@ def compute_yz_marginal(X, params):
     This function will be autograded.
     """
     m, n, c = X.shape
-    y_list = []
-    for i in range(m):
-        log_sum_1 = 0
-        log_sum_0 = 0
-        for j in range(n):
-            z0_0 = multivariate_normal.logpdf(X[i,j], mean=params['mu0'], cov=params['sigma0']) + np.log(params['lambda'])
-            z1_0 = multivariate_normal.logpdf(X[i,j], mean=params['mu1'], cov=params['sigma1']) + np.log(1. - params['lambda'])
-            log_sum_0 += log_sum_exp(z0_0, z1_0)
-            z0_1 = multivariate_normal.logpdf(X[i,j], mean=params['mu0'], cov=params['sigma0']) + np.log(1. - params['lambda'])
-            z1_1 = multivariate_normal.logpdf(X[i,j], mean=params['mu1'], cov=params['sigma1']) + np.log(params['lambda'])
-            log_sum_1 += log_sum_exp(z0_1, z1_1)
-        p_y_1 = log_sum_1 + np.log(params['phi'])
-        p_y_0 = log_sum_0 + np.log(1 - params['phi'])
 
-        p_y = p_y_1 - np.logaddexp(p_y_0, p_y_1)
-        y_list.append(p_y)
-    y_prob = np.array(y_list)
-    # import pdb;pdb.set_trace()
-    z_prob = np.zeros_like(X)
+    y_prob = np.zeros([m,])
+    for i in range(m):
+        y_1 = 0.
+        y_0 = 0.
+        for j in range(n):
+            x = X[i,j]
+            y_1 += p_x_y(x, 1, params)
+            y_0 += p_x_y(x, 0, params)
+        y_1 += p_y(1, params)
+        y_0 += p_y(0, params)
+        y_prob[i] =  y_1 - log_sum_exp(y_1, y_0)
+
+    z_prob = np.zeros([m,n])
     for i in range(m):
         for j in range(n):
-            numerator = y_prob[i]*params['lambda']*multivariate_normal.pdf(X[i,j], mean=params['mu1'], cov=params['sigma1'])
-            numerator += (1.-y_prob[i])*(1.-params['lambda'])*multivariate_normal.pdf(X[i,j], mean=params['mu1'], cov=params['sigma1'])
-            denominator = y_prob[i]*(1.-params['lambda'])*multivariate_normal.pdf(X[i,j], mean=params['mu0'], cov=params['sigma0'])
-            denominator += (1.-y_prob[i])*params['lambda']*multivariate_normal.pdf(X[i,j], mean=params['mu0'], cov=params['sigma0'])
-            denominator += numerator
-            z_prob[i,j] = np.log(numerator) - np.log(denominator)
-    
+            x = X[i,j]
+            z_1 = p_x_z(x, 1, params) + p_z(1, params)
+            z_0 = p_x_z(x, 0, params) + p_z(0, params)
+            z_prob[i,j] = z_1 - log_sum_exp(z_0, z_1) 
+       
     return y_prob, z_prob
 
 
@@ -145,7 +177,6 @@ if __name__ == '__main__':
     colorprint("\tMLE phi: %s\n\tMLE lambda: %s\n"%(params['phi'], params['lambda']), 'red')
 
     # Question B(ii)
-    params = get_random_params()
     y_prob, z_prob = compute_yz_marginal(X_unlabeled, params)   # Get the log probability of y and z conditioned on x
     colorprint("Your predicted party preference:", "teal")
     colorprint(str((y_prob > np.log(0.5)).astype(np.int)), 'red')
@@ -155,6 +186,7 @@ if __name__ == '__main__':
     plt.show()
 
     # Question B(iii)
+    params = get_random_params()
     likelihoods = []
     for i in range(10):
         likelihoods.append(compute_log_likelihood(X_unlabeled, params))

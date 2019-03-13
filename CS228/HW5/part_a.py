@@ -39,7 +39,6 @@ def estimate_params(X, Z):
     mu1 = np.mean(X1, axis=0)
     sigma0 = np.cov(X0,rowvar=False, bias=True)
     sigma1 = np.cov(X1,rowvar=False, bias=True)
-    # import pdb; pdb.set_trace()
     return {'pi': pi, 'mu0': mu0, 'mu1': mu1, 'sigma0': sigma0, 'sigma1': sigma1}
 
 
@@ -57,8 +56,8 @@ def em_update(X, params):
     """
     z_prob = estimate_z_prob_given_x(X, params)
     Z_estimated = np.round(z_prob)
-    params = estimate_params(X, Z_estimated)
-    return params
+    new_params = estimate_params(X, Z_estimated)
+    return new_params
 
 
 def estimate_z_prob_given_x(X, params):
@@ -72,10 +71,12 @@ def estimate_z_prob_given_x(X, params):
 
     This function will be autograded.
     """
-    numerator = multivariate_normal.pdf(X, mean=params['mu1'], cov=params['sigma1'])*params['pi']
-    denominator = multivariate_normal.pdf(X, mean=params['mu1'], cov=params['sigma1'])*params['pi']+multivariate_normal.pdf(X, mean=params['mu0'], cov=params['sigma0'])*(1.-params['pi'])
-    z_prob = numerator/denominator
-    return z_prob
+    p_x_0 = multivariate_normal.logpdf(X, mean=params['mu0'], cov=params['sigma0']) + np.log(1. - params['pi'])
+    p_x_1 = multivariate_normal.logpdf(X, mean=params['mu1'], cov=params['sigma1']) + np.log(params['pi'])
+    num = p_x_1
+    den = log_sum_exp(p_x_0, p_x_1)
+    log_prob = num - den  
+    return np.exp(log_prob)
 
 
 def compute_log_likelihood(X, params):
