@@ -54,11 +54,48 @@ def em_update(X, params):
 
     Note: You will most likely need to use the function estimate_z_prob_given_x
     """
-    z_prob = estimate_z_prob_given_x(X, params)
-    Z_estimated = np.round(z_prob)
-    new_params = estimate_params(X, Z_estimated)
-    return new_params
+    z_prob = np.expand_dims(estimate_z_prob_given_x(X, params), axis=2)    
+    m, n, c = X.shape
+    X0 = X*(1. - z_prob)
+    X1 = X*z_prob
+    X_list = []
+    X0_list = []
+    X1_list = []
+    z_list = []
+    for i in range(m):
+        for j in range(n):
+            X_list.append(X[i,j,:])
+            X0_list.append(X0[i,j,:])
+            X1_list.append(X1[i,j,:])
+            z_list.append(z_prob[i,j,0])
+    # import pdb; pdb.set_trace()
+    X = np.array(X_list)    
+    X0 = np.array(X0_list)
+    X1 = np.array(X1_list)
+    pi = np.mean(z_prob)
+    mu0 = np.sum(X0, axis=0)/np.sum(1. - z_prob)
+    mu1 = np.sum(X1, axis=0)/np.sum(z_prob)
 
+    sigma0 = 0.
+    sigma1 = 0.
+    total0 = 0.
+    total1 = 0.
+    for i in range(len(z_list)):
+        d0 = X[i,:] - mu0
+        sigma0 += (1. - z_list[i])*np.outer(d0,d0)
+        d1 = X[i,:] - mu1
+        sigma1 += z_list[i]*np.outer(d1,d1)
+        total0 += 1 - z_list[i]
+        total1 += z_list[i] 
+    sigma0 /= total0
+    sigma1 /= total1
+    # sigma0 = np.mean(np.array(prod0), axis=0)
+    # import pdb; pdb.set_trace()
+    # sigma0 -= np.expand_dims(mu0, axis=1).dot(np.expand_dims(mu0, axis=0))
+    # sigma1 = np.sum(np.array(prod1), axis=0)
+    # sigma1 -= np.expand_dims(mu1, axis=1).dot(np.expand_dims(mu1, axis=0))
+    # import pdb; pdb.set_trace()
+    return {'pi': pi, 'mu0': mu0, 'mu1': mu1, 'sigma0': sigma0, 'sigma1': sigma1}
 
 def estimate_z_prob_given_x(X, params):
     """ Estimate p(z_{ij}|x_{ij}, theta)
@@ -150,15 +187,11 @@ if __name__ == '__main__':
             break
         params = em_update(X_unlabeled, params)
 
-    # colorprint("MLE estimates for PA part a.ii:", "teal")
-    # colorprint("\tpi: %s\n\tmu_0: %s\n\tmu_1: %s\n\tsigma_0: %s\n\tsigma_1: %s"
-    #     %(params['pi'], params['mu0'], params['mu1'], params['sigma0'], params['sigma1']), "red")
-
     plt.plot(likelihoods)
     ##### Zero Initialization #####
     params['pi'] = 0.5
-    params['mu0'] = -np.array((1.,1.))*0.5
-    params['mu1'] = np.array((1.,1.))*0.5
+    params['mu0'] = -np.array((1.,1.))*0.8
+    params['mu1'] = np.array((1.,1.))*0.8
     params['sigma0'] = np.eye(2)
     params['sigma1'] = np.eye(2)
     likelihoods = []
@@ -167,10 +200,6 @@ if __name__ == '__main__':
         if len(likelihoods) > 2 and likelihoods[-1] - likelihoods[-2] < 0.01:
             break
         params = em_update(X_unlabeled, params)
-
-    # colorprint("MLE estimates for PA part a.ii:", "teal")
-    # colorprint("\tpi: %s\n\tmu_0: %s\n\tmu_1: %s\n\tsigma_0: %s\n\tsigma_1: %s"
-    #     %(params['pi'], params['mu0'], params['mu1'], params['sigma0'], params['sigma1']), "red")
 
     plt.plot(likelihoods)
     plt.show()

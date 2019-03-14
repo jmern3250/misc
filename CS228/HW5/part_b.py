@@ -66,6 +66,7 @@ def p_x(x, params):
     return log_sum_exp(p_x_0, p_x_1)
 
 def z_y_fun(z, y, X, i, j, params):
+    _, n, _ = X.shape
     value = 0. 
     for k in range(n):
         if k != j:
@@ -73,7 +74,7 @@ def z_y_fun(z, y, X, i, j, params):
             z_0 = p_x_z(x, 0, params) + p_z_y(0, y, params)
             z_1 = p_x_z(x, 1, params) + p_z_y(1, y, params)
             value += log_sum_exp(z_0, z_1)
-    value += p_y(y, params) + p_x_z(x, z, params) + p_z_y(z, y, params)
+    value += p_y(y, params) + p_x_z(X[i,j], z, params) + p_z_y(z, y, params)
     return value
 
 def compute_yz_marginal(X, params):
@@ -139,7 +140,9 @@ def compute_yz_joint(X, params):
 
     This function will be autograded.
     """
-    yz_prob = 0.0
+    m, n, _ = X.shape
+    yz_prob = np.zeros((m,n,2,2))
+    
     return yz_prob
 
 
