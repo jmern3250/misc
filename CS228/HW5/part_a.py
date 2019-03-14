@@ -89,12 +89,6 @@ def em_update(X, params):
         total1 += z_list[i] 
     sigma0 /= total0
     sigma1 /= total1
-    # sigma0 = np.mean(np.array(prod0), axis=0)
-    # import pdb; pdb.set_trace()
-    # sigma0 -= np.expand_dims(mu0, axis=1).dot(np.expand_dims(mu0, axis=0))
-    # sigma1 = np.sum(np.array(prod1), axis=0)
-    # sigma1 -= np.expand_dims(mu1, axis=1).dot(np.expand_dims(mu1, axis=0))
-    # import pdb; pdb.set_trace()
     return {'pi': pi, 'mu0': mu0, 'mu1': mu1, 'sigma0': sigma0, 'sigma1': sigma1}
 
 def estimate_z_prob_given_x(X, params):
