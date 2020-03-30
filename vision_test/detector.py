@@ -20,11 +20,11 @@ COLOR_MATRIX = np.stack([SCORE_COLOR,
 						GOLD_STAR_COLOR, 
 						GRAY_STAR_COLOR], axis=-1)
 
-MX = 32
-BX = 140
+MX = 32.
+BX = 140.
 
-MY = 260
-BY = 200
+MY = 260.
+BY = 200.
 # c_x_small = [ 135  367  599  831 1063]
 # slope small: 227
 # interecept small: 196 
@@ -38,31 +38,36 @@ def detect(img):
 	scale_factor = W/w
 	target_size = (int(w*scale_factor), int(h*scale_factor))
 	img = cv2.resize(img, target_size)
+	img = np.flip(img, axis=-1)
 
+	score_map, lvl_map, name_map, star_map = extract_layers(img)
+
+	# plt.imshow(score_map, cmap='gray')
+	# plt.show()
 	ar = h/w
 	r_est_linear = np.round(ALPHA*ar + BETA).astype(np.int32)
 
 	print(r_est_linear)
-	edges = cv2.Canny(img, 100, 200)
-	print('EDGES DONE')
+	# edges = cv2.Canny(img, 100, 200)
+	# print('EDGES DONE')
 	# c_y_1 = detect_rows(edges, r_est_linear - 1)
-	c_y_2 = detect_rows(edges, r_est_linear)
+	c_y_2 = detect_rows(score_map.astype(np.float64)*255., r_est_linear)
 	# c_y_3 = detect_rows(edges, r_est_linear + 1)
 	print('ROWS DONE')
 	# score1 = row_scores(edges, c_y_1)
-	score2 = row_scores(edges, c_y_2)
+	score2 = row_scores(score_map.astype(np.float64)*255., c_y_2)
 	# score3 = row_scores(edges, c_y_3)
 
 	# c_idx = np.argmax([score1, score2, score3])
 	# c_y = [c_y_1, c_y_2, c_y_3][c_idx]
 	# r_est = r_est_linear + c_idx - 1
-	c_x = detect_cols(edges)
+	c_x = detect_cols(score_map.astype(np.float64)*255.)
 	print('COLS DONE')
 
 	print(c_x)
-	plt.imshow(np.flip(img, axis=-1))
+	plt.imshow(img)
 	for x in c_x:
-		for y in c_y:
+		for y in c_y_2:
 			plt.plot(x, y, 'ro')
 	plt.show()
 
@@ -70,10 +75,11 @@ def detect(img):
 def detect_rows(layer, n_rows):
 	layer = (layer==255).astype(np.float64)
 	m, n = layer.shape
-	cur_intercept = m//(n_rows + 1)
-	cur_slope = m//(n_rows + 1)
+	cur_intercept = BY
+	cur_slope = MY
 	_, y_grid = np.meshgrid(np.arange(n), np.arange(m))
-	for i in range(25):
+	y_grid = np.expand_dims(y_grid, axis=-1)
+	for i in range(5):
 		intercepts = [cur_intercept - 10, cur_intercept - 1 , cur_intercept, cur_intercept + 1, cur_intercept + 10]
 		slopes = [cur_slope - 10, cur_slope - 1 , cur_slope, cur_slope + 1, cur_slope + 10]
 		min_error = np.inf
@@ -81,11 +87,9 @@ def detect_rows(layer, n_rows):
 		for intercept in intercepts:
 			for slope in slopes:
 				centroids = np.arange(n_rows)*slope + intercept 
+				centroids = centroids.reshape((1, 1, n_rows))
 				##### Assign Pixel Clusters #####
-				d = np.zeros((m,n,n_rows))
-				for j, y in enumerate(centroids):
-					d_y = np.abs(y_grid - y)
-					d[...,j] = d_y
+				d = np.square(y_grid - centroids)
 				d_min = np.min(d, axis=-1)
 				d_min *= layer
 				error = np.sum(d_min**2)
@@ -102,10 +106,11 @@ def detect_rows(layer, n_rows):
 def detect_cols(layer):
 	layer = (layer==255).astype(np.float64)
 	m, n = layer.shape
-	cur_intercept = n//(5 + 1)
-	cur_slope = n//(5 + 1)
+	cur_intercept = n//(5. + 1)
+	cur_slope = n//(5 + 1.)
 	x_grid, _ = np.meshgrid(np.arange(n), np.arange(m))
-	for i in range(25):
+	x_grid = np.expand_dims(x_grid, axis=-1)
+	for i in range(5):
 		intercepts = [cur_intercept - 10, cur_intercept - 1 , cur_intercept, cur_intercept + 1, cur_intercept + 10]
 		slopes = [cur_slope - 10, cur_slope - 1 , cur_slope, cur_slope + 1, cur_slope + 10]
 		min_error = np.inf
@@ -113,11 +118,9 @@ def detect_cols(layer):
 		for intercept in intercepts:
 			for slope in slopes:
 				centroids = np.arange(5)*slope + intercept 
+				centroids = centroids.reshape((1, 1, 5))
 				##### Assign Pixel Clusters #####
-				d = np.zeros((m,n,5))
-				for j, x in enumerate(centroids):
-					d_x = np.abs(x_grid - x)
-					d[...,j] = d_x
+				d = np.square(x_grid - centroids)
 				d_min = np.min(d, axis=-1)
 				d_min *= layer
 				error = np.sum(d_min**2)
@@ -140,11 +143,11 @@ def row_scores(layer, c_rows):
 		row_top = row_bottom
 		row_c = c_rows[i]
 		if i == (n_rows -1):
-			row_bottom = m
+			row_bottom = int(m)
 		else:
 			next_row = c_rows[i+1]
 			d_row = (next_row - row_c)//2
-			row_bottom = row_c + d_row
+			row_bottom = int(row_c + d_row)
 		row_h = row_bottom - row_top
 		scores = 1/(1 + np.abs(y_grid - row_c))
 		scores *= layer
@@ -155,7 +158,7 @@ def row_scores(layer, c_rows):
 
 def extract_layers(pic):
 	score_map = np.abs(pic - SCORE_COLOR)
-	score_map = np.sum(score_map, axis=-1)  <= 10
+	score_map = np.sum(score_map, axis=-1)  <= 15
 
 	lvl_map = np.abs(pic - LVL_COLOR)
 	lvl_map = np.sum(lvl_map, axis=-1)  <= 15
@@ -214,7 +217,7 @@ def detect_layer(layer, n_rows, d_x, d_y):
 
 
 if __name__ == "__main__":
-	img = cv2.imread('data/pic2.jpg')
-	# img = cv2.imread('data/pic4.png')
+	# img = cv2.imread('data/pic3.jpg')
+	img = cv2.imread('data/pic4.png')
 	detect(img)
 	
