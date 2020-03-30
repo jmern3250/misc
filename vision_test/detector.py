@@ -13,27 +13,7 @@ RED_STAR_COLOR = np.array([206, 0, 0]).reshape([1,1,3]) #R, G, B
 GOLD_STAR_COLOR = np.array([249, 185, 51]).reshape([1,1,3]) #R, G, B
 GRAY_STAR_COLOR = np.array([118, 118, 118]).reshape([1,1,3]) #R, G, B
 
-COLOR_MATRIX = np.stack([SCORE_COLOR, 
-						LVL_COLOR, 
-						NAME_COLOR, 
-						RED_STAR_COLOR, 
-						GOLD_STAR_COLOR, 
-						GRAY_STAR_COLOR], axis=-1)
-
-MX = 32.
-BX = 140.
-
-MY = 260.
-BY = 200.
-# c_x_small = [ 135  367  599  831 1063]
-# slope small: 227
-# interecept small: 196 
-
-# slope large: 260
-# interectp large: 235
-# c_x_large: [ 147  387  627  867 1107]
-
-def detect(img):
+def detect(img, n_rows=None):
 	h, w, _ = img.shape
 	scale_factor = W/w
 	target_size = (int(w*scale_factor), int(h*scale_factor))
@@ -42,48 +22,37 @@ def detect(img):
 
 	score_map, lvl_map, name_map, star_map = extract_layers(img)
 
-	# plt.imshow(score_map, cmap='gray')
-	# plt.show()
-	ar = h/w
-	r_est_linear = np.round(ALPHA*ar + BETA).astype(np.int32)
+	if n_rows is None:
+		ar = h/w
+		n_rows = np.round(ALPHA*ar + BETA).astype(np.int32)
+	elif isnumeric(n_rows):
+		n_rows = int(n_rows)
+	else:
+		raise ValueError('n_rows must be a numeric value or "None"')
 
-	print(r_est_linear)
-	# edges = cv2.Canny(img, 100, 200)
-	# print('EDGES DONE')
-	# c_y_1 = detect_rows(edges, r_est_linear - 1)
-	c_y_2 = detect_rows(score_map.astype(np.float64)*255., r_est_linear)
-	# c_y_3 = detect_rows(edges, r_est_linear + 1)
-	print('ROWS DONE')
-	# score1 = row_scores(edges, c_y_1)
-	score2 = row_scores(score_map.astype(np.float64)*255., c_y_2)
-	# score3 = row_scores(edges, c_y_3)
-
-	# c_idx = np.argmax([score1, score2, score3])
-	# c_y = [c_y_1, c_y_2, c_y_3][c_idx]
-	# r_est = r_est_linear + c_idx - 1
+	h, w, _ = img.shape
+	m0 = b0 = h//(n_rows + 1.)
+	c_y_score, m, b = detect_rows(score_map.astype(np.float64)*255., r_est_linear, 10, m0, b0)
 	c_x = detect_cols(score_map.astype(np.float64)*255.)
-	print('COLS DONE')
 
-	print(c_x)
 	plt.imshow(img)
 	for x in c_x:
-		for y in c_y_2:
+		for y in c_y:
 			plt.plot(x, y, 'ro')
 	plt.show()
 
 
-def detect_rows(layer, n_rows):
+def detect_rows(layer, n_rows, n_its, m0, b0):
 	layer = (layer==255).astype(np.float64)
 	m, n = layer.shape
-	cur_intercept = BY
-	cur_slope = MY
+	cur_intercept = b0
+	cur_slope = m0
 	_, y_grid = np.meshgrid(np.arange(n), np.arange(m))
 	y_grid = np.expand_dims(y_grid, axis=-1)
-	for i in range(5):
-		intercepts = [cur_intercept - 10, cur_intercept - 1 , cur_intercept, cur_intercept + 1, cur_intercept + 10]
-		slopes = [cur_slope - 10, cur_slope - 1 , cur_slope, cur_slope + 1, cur_slope + 10]
+	for i in range(n_its):
+		intercepts = [cur_intercept - 5, cur_intercept - 1 , cur_intercept, cur_intercept + 1, cur_intercept + 5]
+		slopes = [cur_slope - 5, cur_slope - 1 , cur_slope, cur_slope + 1, cur_slope + 5]
 		min_error = np.inf
-		max_score = 0
 		for intercept in intercepts:
 			for slope in slopes:
 				centroids = np.arange(n_rows)*slope + intercept 
@@ -99,9 +68,7 @@ def detect_rows(layer, n_rows):
 					cur_intercept = intercept
 
 	c_rows = np.arange(n_rows)*cur_slope + cur_intercept
-	print(cur_slope)
-	print(cur_intercept)
-	return c_rows
+	return c_rows, cur_slope, cur_intercept
 
 def detect_cols(layer):
 	layer = (layer==255).astype(np.float64)
@@ -110,7 +77,7 @@ def detect_cols(layer):
 	cur_slope = n//(5 + 1.)
 	x_grid, _ = np.meshgrid(np.arange(n), np.arange(m))
 	x_grid = np.expand_dims(x_grid, axis=-1)
-	for i in range(5):
+	for i in range(10):
 		intercepts = [cur_intercept - 10, cur_intercept - 1 , cur_intercept, cur_intercept + 1, cur_intercept + 10]
 		slopes = [cur_slope - 10, cur_slope - 1 , cur_slope, cur_slope + 1, cur_slope + 10]
 		min_error = np.inf
@@ -217,7 +184,7 @@ def detect_layer(layer, n_rows, d_x, d_y):
 
 
 if __name__ == "__main__":
-	# img = cv2.imread('data/pic3.jpg')
-	img = cv2.imread('data/pic4.png')
+	img = cv2.imread('data/pic3.jpg')
+	# img = cv2.imread('data/pic4.png')
 	detect(img)
 	
