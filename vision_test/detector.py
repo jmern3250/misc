@@ -23,7 +23,8 @@ def detect(img, n_rows=None):
 	target_size = (int(w*scale_factor), int(h*scale_factor))
 
 	img = cv2.resize(img, target_size)
-	img = np.flip(img, axis=-1)[:760, ...]
+	# img = np.flip(img, axis=-1)[:760, ...]
+	img = img[:760, ..., :3]
 	h, w, _ = img.shape
 
 	score_map, lvl_map, name_map, star_map = extract_layers(img)
@@ -123,8 +124,8 @@ def segment_image(img, c_x, c_y):
 			start_x = int(x-B_W//2)
 			end_x = start_x + B_W
 			img_seg = img[start_y:end_y, start_x:end_x, ...]
-			plt.imshow(img_seg)
-			plt.show()
+			# plt.imshow(img_seg)
+			# plt.show()
 			imgs.append(img_seg)
 	return imgs
 
