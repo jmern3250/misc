@@ -5,6 +5,8 @@ import cv2
 import pytesseract
 from skimage import transform as tf
 
+SCALE = 5
+
 SCORE_COLOR = np.array([255, 246, 157]).reshape([1,1,3]) #R, G, B
 LVL_COLOR = np.array([216, 212, 244]).reshape([1,1,3]) #R, G, B
 NAME_COLOR = np.array([253, 253, 253]).reshape([1,1,3]) #R, G, B
@@ -23,6 +25,11 @@ CORR_DICT = {'S':'5',
 
 img_array = plt.imread('./data/img6.png')[...,:3]
 img_array *= 255
+
+h, w, _ = img_array.shape
+
+size = (int(w*SCALE), int(h*SCALE))
+img_array = cv2.resize(img_array.astype(np.uint8), size, interpolation=cv2.INTER_LANCZOS4)
 
 def extract_window(img, w, h):
 	m, n = img.shape
@@ -70,20 +77,48 @@ def correct(in_string):
 
 # score_string = pytesseract.image_to_string(score_map, lang='eng', config='--oem 1 --psm 6')
 # print("Score: ", score_string)
+# ##### Score #####
+# # 1) Binarize Image
+# d_score = np.sum(np.abs(img_array - SCORE_COLOR), axis=-1)
+# score_map = d_score <= 30
+
+# # 2) K-means Extraction 
+# score_map = extract_window(score_map, W_SCORE*SCALE, H_SCORE*SCALE)
+# score_map = score_map.astype(np.float32)
+
+# # 3) Un-shear (remove italic slant)
+# affine_tf = tf.AffineTransform(shear=0.25)
+# score_map = tf.warp(score_map, inverse_map=affine_tf)
+# score_map = np.ceil(score_map).astype(np.uint8)
+
+# # 4) Define Kernel and Close
+# kernel_dim = 3
+# kernel = np.ones((kernel_dim, kernel_dim),np.uint8)
+
+# score_map = cv2.morphologyEx(score_map, cv2.MORPH_CLOSE, kernel)
+# score_map = cv2.morphologyEx(score_map, cv2.MORPH_CLOSE, kernel)
+
+# # 5) Erosion
+# score_map = cv2.erode(score_map, kernel, iterations=1)
+# # score_map = cv2.morphologyEx(score_map, cv2.MORPH_OPEN, kernel)
+
+# # 6) Invert Binarization 
+# score_map = (1 - score_map)*255
+# # plt.figure()
+# # plt.imshow(score_map, cmap='gray')
+# # plt.show()
+
+# # 7) Tesseract OCR
+# score_string = pytesseract.image_to_string(score_map, lang='eng', config='--oem 1 --psm 6 -c tessedit_char_whitelist=0123456789SG')
+
+# # 8) Swap incorrect characters
+# score_string = correct(score_string)
+# print("score: ", score_string)
 
 ##### Lvl #####
-# lvl_map = (1 - lvl_map).astype(np.uint8)*255
-# lvl_map = cv2.filter2D(lvl_map,-1,kernel)#/255
-# lvl_map = np.floor(lvl_map)*255
-# lvl_map = np.stack([lvl_map]*3, axis=-1).astype(np.uint8)
-h, w, _ = img_array.shape
-SCALE = 5
-size = (int(w*SCALE), int(h*SCALE))
-img_array = cv2.resize(img_array, size, interpolation=cv2.INTER_LANCZOS4)
-
 # 1) Binarize Image
-d_lvl = np.sum(np.abs(img_array - LVL_COLOR), axis=-1)
-lvl_map = d_lvl <= 30
+d_lvl = np.sum(np.abs(img_array.astype(np.float32) - LVL_COLOR), axis=-1)
+lvl_map = d_lvl <= 35
 
 # 2) K-means Extraction 
 lvl_map = extract_window(lvl_map, W_LVL*SCALE, H_LVL*SCALE)
@@ -98,12 +133,12 @@ lvl_map = np.ceil(lvl_map).astype(np.uint8)
 kernel_dim = 3
 kernel = np.ones((kernel_dim, kernel_dim),np.uint8)
 
-lvl_map = cv2.morphologyEx(lvl_map, cv2.MORPH_CLOSE, kernel)
-lvl_map = cv2.morphologyEx(lvl_map, cv2.MORPH_CLOSE, kernel)
+lvl_map = cv2.morphologyEx(lvl_map, cv2.MORPH_CLOSE, kernel, iterations=2)
 
 # 5) Erosion
-lvl_map = cv2.erode(lvl_map, kernel, iterations=1)
-# lvl_map = cv2.morphologyEx(lvl_map, cv2.MORPH_OPEN, kernel)
+kernel_dim = 3
+kernel = np.ones((kernel_dim, kernel_dim),np.uint8)
+lvl_map = cv2.erode(lvl_map, kernel, iterations=2)
 
 # 6) Invert Binarization 
 lvl_map = (1 - lvl_map)*255
@@ -112,7 +147,7 @@ plt.imshow(lvl_map, cmap='gray')
 plt.show()
 
 # 7) Tesseract OCR
-lvl_string = pytesseract.image_to_string(lvl_map, lang='eng', config='--oem 1 --psm 6 -c tessedit_char_whitelist=0123456789SG')
+lvl_string = pytesseract.image_to_string(lvl_map, lang='eng', config='--oem 1 --psm 7 -c tessedit_char_whitelist=0123456789SG')
 
 # 8) Swap incorrect characters
 lvl_string = correct(lvl_string)

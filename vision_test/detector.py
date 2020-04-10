@@ -35,7 +35,7 @@ def detect(img, n_rows=None):
 	if n_rows is None:
 		ar = h/w
 		n_rows = np.round(ALPHA*ar + BETA).astype(np.int32)
-	elif isnumeric(n_rows):
+	elif isinstance(n_rows, (int, float)):
 		n_rows = int(n_rows)
 	else:
 		raise ValueError('n_rows must be a numeric value or "None"')
@@ -124,8 +124,6 @@ def segment_image(img, c_x, c_y):
 			start_x = int(x-B_W//2)
 			end_x = start_x + B_W
 			img_seg = img[start_y:end_y, start_x:end_x, ...]
-			# plt.imshow(img_seg)
-			# plt.show()
 			imgs.append(img_seg)
 	return imgs
 
