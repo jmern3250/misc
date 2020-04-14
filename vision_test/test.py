@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 import ocr
 
-label_file = './data/train_labels.csv'
+label_file = './data/test_labels.csv'
 labels = np.loadtxt(label_file, dtype=np.object, delimiter=',', skiprows=1)
 
 m, n = labels.shape
@@ -19,6 +19,6 @@ for i in range(m):
 	output_dicts = ocr.process_image(img_array, 2)
 	for j in range(10):
 		print(output_dicts[j]['name'])
-		# errors_name += output_dict["name"] != labels[i, j*5]
+		errors_name += output_dicts[j]["name"] != labels[i, j*5]
 	import pdb; pdb.set_trace()
 	print()
