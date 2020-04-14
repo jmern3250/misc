@@ -23,7 +23,6 @@ def detect(img, n_rows=None):
 	target_size = (int(w*scale_factor), int(h*scale_factor))
 
 	img = cv2.resize(img, target_size)
-	# img = np.flip(img, axis=-1)[:760, ...]
 	img = img[:760, ..., :3]
 	h, w, _ = img.shape
 
@@ -42,7 +41,6 @@ def detect(img, n_rows=None):
 
 	c_y = detect_rows(full_map, n_rows, 5)
 	c_x = detect_cols(full_map, 5)
-
 	return segment_image(img, c_x, c_y)
 
 def detect_rows(layer, n_rows, n_its):
