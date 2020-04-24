@@ -369,7 +369,9 @@ if __name__ == "__main__":
     #             100, './models/net_1', weight=0.1, checkpoint='./models/net_0_41')
     # graph.ocr_test('./data/train_data.p', './models/net_1_15')
 
-    test_img = plt.imread('./data/img0.png')[...,:3]
+    test_img = plt.imread('./data/img0.png')[...,:3]*255.
+    # plt.imshow(test_img)
+    # plt.show()
     # import pdb; pdb.set_trace()
     graph.restore_model('./models/net_1_15')
     test = graph.encode_image(test_img)
